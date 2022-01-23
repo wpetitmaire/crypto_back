@@ -20,6 +20,7 @@ import java.net.http.HttpResponse;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -43,25 +44,28 @@ public class CoinbaseApi {
     * @throws InterruptedException
     */
    public List<Account> readAccounts() throws NoSuchAlgorithmException, IOException, InvalidKeyException, InterruptedException {
-      final String ressourceUrl = "/accounts";
-      final HttpResponse<String> getRequestResponse = getRequest(ressourceUrl);
 
-      String response = getRequestResponse.body();
+      List<Account> accountList = new ArrayList<>();
+      boolean isNextPage;
+      String ressourceUrl = "/v2/accounts";
+      HttpResponse<String> getRequestResponse;
+      String response;
+      AccountsResponse accountsResponse;
 
-      Gson gson = new Gson();
-      AccountsResponse accountsResponse = gson.fromJson(response, AccountsResponse.class);
+      do {
+         getRequestResponse = getRequest(ressourceUrl);
+         response = getRequestResponse.body();
+         accountsResponse = new Gson().fromJson(response, AccountsResponse.class);
+         accountList.addAll(accountsResponse.getData());
 
-      Gson gsonTest = new GsonBuilder()
-              .setPrettyPrinting()
-              .create();
+         // If there is another page, change ressource url and do it again
+         isNextPage = accountsResponse.getPagination().getNext_uri() != null;
+         ressourceUrl = accountsResponse.getPagination().getNext_uri();
+      } while (isNextPage);
 
-      System.out.println(gsonTest.toJson(accountsResponse.getPagination()));
+      logger.info("Account number : {}", accountList.size());
 
-      logger.info("TEST INFO");
-      logger.debug("TEST DEBUG");
-      logger.error("TEST ERROR");
-
-      return accountsResponse.getData();
+      return accountList;
    }
 
    /* REQUESTS METHODS */
@@ -73,10 +77,10 @@ public class CoinbaseApi {
    private HttpResponse<String> getRequest(String ressourceUrl, String payload) throws NoSuchAlgorithmException, InvalidKeyException, IOException, InterruptedException {
 
       final long timestamp = Instant.now().getEpochSecond();
-      final String signature = getSignature(timestamp, "GET", API_VERSION_URL + ressourceUrl, "");
+      final String signature = getSignature(timestamp, "GET", ressourceUrl, "");
 
       HttpRequest request = HttpRequest.newBuilder()
-              .uri(URI.create(BASE_URL + API_VERSION_URL + ressourceUrl))
+              .uri(URI.create(BASE_URL + ressourceUrl))
               .header("CB-ACCESS-KEY", API_KEY)
               .header("CB-ACCESS-SIGN", signature)
               .header("CB-ACCESS-TIMESTAMP", String.valueOf(timestamp))
