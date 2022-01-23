@@ -31,7 +31,7 @@ public class CoinbaseApi {
    private final static String BASE_URL = "https://api.coinbase.com";
    private final static String API_VERSION_URL = "/v2";
    private final static String API_VERSION = "2021-06-03";
-   private final static Logger LOGGER = LogManager.getLogger(CoinbaseApi.class);
+   private final static Logger logger = LogManager.getLogger(CoinbaseApi.class);
    private final static HttpClient client = HttpClient.newHttpClient();
 
    /**
@@ -43,8 +43,6 @@ public class CoinbaseApi {
     * @throws InterruptedException
     */
    public List<Account> readAccounts() throws NoSuchAlgorithmException, IOException, InvalidKeyException, InterruptedException {
-      LOGGER.info("--CoinbaseApi.readAccounts()--");
-
       final String ressourceUrl = "/accounts";
       final HttpResponse<String> getRequestResponse = getRequest(ressourceUrl);
 
@@ -59,6 +57,10 @@ public class CoinbaseApi {
 
       System.out.println(gsonTest.toJson(accountsResponse.getPagination()));
 
+      logger.info("TEST INFO");
+      logger.debug("TEST DEBUG");
+      logger.error("TEST ERROR");
+
       return accountsResponse.getData();
    }
 
@@ -69,7 +71,6 @@ public class CoinbaseApi {
    }
 
    private HttpResponse<String> getRequest(String ressourceUrl, String payload) throws NoSuchAlgorithmException, InvalidKeyException, IOException, InterruptedException {
-      LOGGER.info("--CoinbaseApi.getRequest()--");
 
       final long timestamp = Instant.now().getEpochSecond();
       final String signature = getSignature(timestamp, "GET", API_VERSION_URL + ressourceUrl, "");
@@ -96,7 +97,6 @@ public class CoinbaseApi {
     * @throws InvalidKeyException
     */
    private String getSignature(long timestamp, String httpMethod, String requestPath, String payload) throws NoSuchAlgorithmException, InvalidKeyException {
-      LOGGER.info("--CoinbaseApi.getSignature()--");
 
       String prehash = timestamp + httpMethod.toUpperCase() + requestPath;
 
@@ -108,6 +108,8 @@ public class CoinbaseApi {
       SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "HmacSHA256");
       hmacSHA256.init(secretKeySpec);
       byte[] hash = hmacSHA256.doFinal(prehash.getBytes());
+
+      logger.info("Signature : " + Hex.encodeHexString(hash));
 
       return Hex.encodeHexString(hash);
    }
