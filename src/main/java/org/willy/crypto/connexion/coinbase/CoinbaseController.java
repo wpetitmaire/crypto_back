@@ -24,4 +24,9 @@ public class CoinbaseController {
         return api.readAccounts();
     }
 
+    @GetMapping(path = "/sotcked_accounts")
+    public List<Account> getAccounts() {
+        return api.getStockedAccounts();
+    }
+
 }
