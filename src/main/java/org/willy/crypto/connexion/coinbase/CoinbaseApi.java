@@ -1,12 +1,14 @@
 package org.willy.crypto.connexion.coinbase;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.willy.crypto.connexion.coinbase.objects.account.Account;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponse;
 import org.willy.crypto.connexion.coinbase.objects.transaction.Transaction;
@@ -39,22 +41,15 @@ public class CoinbaseApi {
    private final static HttpClient client = HttpClient.newHttpClient();
 
    private List<Account> userAccounts = null;
-   private List<Account> userAccountsTEST = null;
    private Instant userAccountsRefreshDate = null;
 
    public List<Account> getStockedAccounts() {
-
-
       return userAccounts;
    }
 
    /**
     * Return all Coinbase accounts
-    * @return
-    * @throws NoSuchAlgorithmException
-    * @throws IOException
-    * @throws InvalidKeyException
-    * @throws InterruptedException
+    * @return user accounts
     */
    public List<Account> readAccounts() throws NoSuchAlgorithmException, IOException, InvalidKeyException, InterruptedException {
       logger.info("Read accounts");
@@ -80,14 +75,7 @@ public class CoinbaseApi {
 
       // Check each account and keep only those who are/were used by the user
       accountList = accountList.stream()
-              .filter(account -> {
-                 try {
-                    return thereIsTransactionsForTheAccount(account.getCurrency().getCode());
-                 } catch (NoSuchAlgorithmException | InterruptedException | InvalidKeyException | IOException e) {
-                    e.printStackTrace();
-                 }
-                 return false;
-              })
+              .filter(account -> thereIsTransactionsForTheAccount(account.getCurrency().getCode()))
               .collect(Collectors.toList());
 
       userAccounts = accountList;
@@ -98,7 +86,7 @@ public class CoinbaseApi {
       return accountList;
    }
 
-   public boolean thereIsTransactionsForTheAccount(String accountId) throws NoSuchAlgorithmException, IOException, InvalidKeyException, InterruptedException {
+   public boolean thereIsTransactionsForTheAccount(String accountId){
       logger.info("thereIsTransactionsForTheAccount : " + accountId);
 
       return readTransactionsOfAAccount(accountId, true).size() > 0;
@@ -111,12 +99,8 @@ public class CoinbaseApi {
     * @param accountId Id of the account
     * @param testIsATransaction true if we just need to know if it exists at least one transaction
     * @return List of transactions
-    * @throws NoSuchAlgorithmException
-    * @throws IOException
-    * @throws InvalidKeyException
-    * @throws InterruptedException
     */
-   public List<Transaction> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) throws NoSuchAlgorithmException, IOException, InvalidKeyException, InterruptedException {
+   public List<Transaction> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) {
       logger.info("Read transactions from ressource : " + accountId + " - just test ? : " + testIsATransaction);
 
       List<Transaction> transactions = new ArrayList<>();
@@ -126,7 +110,7 @@ public class CoinbaseApi {
       TransactionResponse transactionResponse;
       String ressourceUrl;
 
-      if (testIsATransaction) {
+      if (testIsATransaction) { // retrieve only one transaction is enough for testing.
          ressourceUrl = "/v2/accounts/"+accountId+"/transactions?&limit=1";
       } else {
          ressourceUrl = "/v2/accounts/\"+accountId+\"/transactions";
@@ -147,63 +131,70 @@ public class CoinbaseApi {
             isNextPage = false;
       } while (isNextPage);
 
-      logger.info("Transaction number : {}", transactions.size());
-
-//      Gson gsonTest = new GsonBuilder().setPrettyPrinting().create();
-//      for (int i = 0; i <transactions.size(); i++) {
-//         System.out.println("----------------------------------------");
-//         System.out.println(gsonTest.toJson(transactions.get(i)));
-//      }
+      logger.debug("Transaction number : {}", transactions.size());
 
       return transactions;
    }
 
    /* REQUESTS METHODS */
 
-   private HttpResponse<String> getRequest(String ressourceUrl) throws NoSuchAlgorithmException, InvalidKeyException, IOException, InterruptedException {
-      return getRequest(ressourceUrl, "");
-   }
-
-   private HttpResponse<String> getRequest(String ressourceUrl, String payload) throws NoSuchAlgorithmException, InvalidKeyException, IOException, InterruptedException {
+   /**
+    * Send a GET request
+    * @param resourceUrl API resource path
+    * @return get request response
+    */
+   private HttpResponse<String> getRequest(String resourceUrl) {
 
       final long timestamp = Instant.now().getEpochSecond();
-      final String signature = getSignature(timestamp, "GET", ressourceUrl, "");
+      final String signature = getSignature(timestamp, HttpMethod.GET, resourceUrl, "");
 
       HttpRequest request = HttpRequest.newBuilder()
-              .uri(URI.create(BASE_URL + ressourceUrl))
+              .uri(URI.create(BASE_URL + resourceUrl))
               .header("CB-ACCESS-KEY", API_KEY)
               .header("CB-ACCESS-SIGN", signature)
               .header("CB-ACCESS-TIMESTAMP", String.valueOf(timestamp))
               .header("CB-VERSION", API_VERSION)
               .build();
 
-      return client.send(request, HttpResponse.BodyHandlers.ofString());
+      try {
+         return client.send(request, HttpResponse.BodyHandlers.ofString());
+      } catch (IOException | InterruptedException e) {
+         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error sending request to CB");
+      }
    }
 
    /**
     * Create the encoded signature. Used for each request
     * @param timestamp number of seconds since Unix Epoch.
-    * @param httpMethod
-    * @param requestPath
-    * @param payload
+    * @param httpMethod HttpMethod
+    * @param resourcePath api ressource path
+    * @param payload request body
     * @return encoded signature
-    * @throws NoSuchAlgorithmException
-    * @throws InvalidKeyException
     */
-   private String getSignature(long timestamp, String httpMethod, String requestPath, String payload) throws NoSuchAlgorithmException, InvalidKeyException {
+   private String getSignature(long timestamp, HttpMethod httpMethod, String resourcePath, String payload) {
 
-      String prehash = timestamp + httpMethod.toUpperCase() + requestPath;
+      String prehash = timestamp + httpMethod.toString() + resourcePath;
 
-      if (httpMethod.toUpperCase().equals("POST") || httpMethod.toUpperCase().equals("PUT")) {
+      if (httpMethod.equals(HttpMethod.POST) || httpMethod.equals(HttpMethod.PUT)) {
          prehash += payload;
       }
 
-      Mac hmacSHA256 = Mac.getInstance("HmacSHA256");
+      Mac hmacSHA256 = null;
+      try {
+         hmacSHA256 = Mac.getInstance("HmacSHA256");
+      } catch (NoSuchAlgorithmException e) {
+         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Algorithm HmacSHA256 not found in Mac.", e);
+      }
+
       SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "HmacSHA256");
-      hmacSHA256.init(secretKeySpec);
+      try {
+         hmacSHA256.init(secretKeySpec);
+      } catch (InvalidKeyException e) {
+         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "invalid secretKey.", e);
+      }
       byte[] hash = hmacSHA256.doFinal(prehash.getBytes());
 
-      logger.info("Signature : " + Hex.encodeHexString(hash));
+      logger.debug("Signature : " + Hex.encodeHexString(hash));
 
       return Hex.encodeHexString(hash);
    }
