@@ -5,17 +5,29 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Currency {
+@Embeddable
+public class CurrencyCB {
+
+    @Column(name = "currency_code")
     private String code;
+
+    @Column(name = "currency_name")
     private String name;
+
     private String color;
     private int sort_index;
     private int exponent;
+
+    @Column(name = "currency_type")
     private String type;
+
     private String address_regex;
     private String asset_id;
     private String slugs;

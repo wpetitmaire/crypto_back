@@ -9,7 +9,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Pagination {
+public class PaginationCB {
     private String ending_before;
     private String starting_after;
     private String previous_ending_before;

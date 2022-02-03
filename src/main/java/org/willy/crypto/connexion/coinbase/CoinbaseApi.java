@@ -1,18 +1,22 @@
 package org.willy.crypto.connexion.coinbase;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import org.willy.crypto.connexion.coinbase.objects.account.Account;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponse;
-import org.willy.crypto.connexion.coinbase.objects.transaction.Transaction;
-import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponse;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponseCB;
+import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
+import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponseCB;
+import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,6 +28,8 @@ import java.net.http.HttpResponse;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,34 +42,48 @@ public class CoinbaseApi {
    private final static String API_KEY = System.getProperty("cbApiKey");
    private final static String BASE_URL = "https://api.coinbase.com";
    private final static String API_VERSION_URL = "/v2";
-   private final static String API_VERSION = "2021-06-03";
+   private final static String API_VERSION = "";
    private final static Logger logger = LogManager.getLogger(CoinbaseApi.class);
    private final static HttpClient client = HttpClient.newHttpClient();
 
-   private List<Account> userAccounts = null;
-   private Instant userAccountsRefreshDate = null;
+   private LocalDateTime accountsRetrieveDate;
+   private final AccountRepository accountRepository;
 
-   public List<Account> getStockedAccounts() {
-      return userAccounts;
+
+   @Autowired
+   public CoinbaseApi(AccountRepository accountRepository) {
+      this.accountRepository = accountRepository;
    }
 
    /**
     * Return all Coinbase accounts
     * @return user accounts
+    * @param refresh force refresh
     */
-   public List<Account> readAccounts() throws NoSuchAlgorithmException, IOException, InvalidKeyException, InterruptedException {
+   public List<AccountCB> readAccounts(Boolean refresh) {
       logger.info("Read accounts");
-      List<Account> accountList = new ArrayList<>();
+
+      List<AccountCB> accountList = new ArrayList<>();
+
+      LocalDateTime timeLimit = LocalDateTime.now().minus(1L, ChronoUnit.DAYS);
+      if (accountsRetrieveDate != null && (accountsRetrieveDate.compareTo(timeLimit) > 0 || !refresh)) {
+         return accountRepository.findAll();
+      }
+
+      // Start from scratch
+      accountRepository.deleteAll();
+
       boolean isNextPage;
       String ressourceUrl = "/v2/accounts";
       HttpResponse<String> getRequestResponse;
       String response;
-      AccountsResponse accountsResponse;
+      AccountsResponseCB accountsResponse;
+      Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
       do {
          getRequestResponse = getRequest(ressourceUrl);
          response = getRequestResponse.body();
-         accountsResponse = new Gson().fromJson(response, AccountsResponse.class);
+         accountsResponse = gson.fromJson(response, AccountsResponseCB.class);
          accountList.addAll(accountsResponse.getData());
 
          // If there is another page, change ressource url and do it again
@@ -71,17 +91,16 @@ public class CoinbaseApi {
          ressourceUrl = accountsResponse.getPagination().getNext_uri();
       } while (isNextPage);
 
-      logger.info("Account number : {}", accountList.size());
+      accountsRetrieveDate = LocalDateTime.now();
 
       // Check each account and keep only those who are/were used by the user
       accountList = accountList.stream()
               .filter(account -> thereIsTransactionsForTheAccount(account.getCurrency().getCode()))
+              .peek(account -> account.setAccount_retrieve_date(accountsRetrieveDate))
               .collect(Collectors.toList());
 
-      userAccounts = accountList;
-      userAccountsRefreshDate = Instant.now();
-
-      accountList.forEach(account -> System.out.println("NAME : " + account.getCurrency().getName() + " - CODE : " + account.getCurrency().getCode()));
+      // save the result in the DB and save the retrieve data
+      accountRepository.saveAll(accountList);
 
       return accountList;
    }
@@ -100,14 +119,14 @@ public class CoinbaseApi {
     * @param testIsATransaction true if we just need to know if it exists at least one transaction
     * @return List of transactions
     */
-   public List<Transaction> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) {
+   public List<TransactionCB> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) {
       logger.info("Read transactions from ressource : " + accountId + " - just test ? : " + testIsATransaction);
 
-      List<Transaction> transactions = new ArrayList<>();
+      List<TransactionCB> transactions = new ArrayList<>();
       boolean isNextPage;
       HttpResponse<String> getRequestResponse;
       String reponse;
-      TransactionResponse transactionResponse;
+      TransactionResponseCB transactionResponse;
       String ressourceUrl;
 
       if (testIsATransaction) { // retrieve only one transaction is enough for testing.
@@ -119,7 +138,7 @@ public class CoinbaseApi {
       do {
          getRequestResponse = getRequest(ressourceUrl);
          reponse = getRequestResponse.body();
-         transactionResponse = new Gson().fromJson(reponse, TransactionResponse.class);
+         transactionResponse = new Gson().fromJson(reponse, TransactionResponseCB.class);
          transactions.addAll(transactionResponse.getData());
 
          // If there is another page, change ressource url and do it again
@@ -199,4 +218,43 @@ public class CoinbaseApi {
       return Hex.encodeHexString(hash);
    }
 
+   public List<AccountCB> testCreation() {
+
+//      CurrencyCB currencyCB = new CurrencyCB("BTC", "Bitcoin", "yellow", 1, 8, "crypto", "^((D|A|9)[a-km-zA-HJ-NP-Z1-9]{25,34})$",
+//              "d9a3edfa-1be7-589c-bd20-c034f3830b60", null);
+//
+//      BalanceCB balanceCB = new BalanceCB("346.97111137", "DOGE");
+//
+//      AccountCB accountCB = new AccountCB("abbb1d77-a818-5393-b29d-45a38230d803", "Portefeuille en DOGE", true, "wallet",
+//              currencyCB, balanceCB, "2021-08-15T13:51:07Z", "2021-08-21T09:31:43Z", "account", "/v2/accounts/abbb1d77-a818-5393-b29d-45a38230d803", true, true);
+//
+//      accountRepository.save(accountCB);
+
+//      accountsRetrieveDate = Instant.now().minus(1L, ChronoUnit.DAYS);
+//      Instant heureLimite = Instant.now().minus(6L, ChronoUnit.HOURS);
+//
+//      System.out.println("Heure derniere recherche : " + accountsRetrieveDate);
+//      System.out.println("Heure limite : " + heureLimite);
+//
+//      int value = accountsRetrieveDate.compareTo(heureLimite);
+//
+//      if (value > 0)
+//         System.out.println("accountsRetrieveDate is greater");
+//      else if (value == 0)
+//         System.out.println("accountsRetrieveDate is equal to heureLimite");
+//      else
+//         System.out.println("heureLimite is greater");
+
+
+
+
+
+//      logger.info(accountsRetrieveDate);
+//
+//      if(accountsRetrieveDate != null && accountsRetrieveDate.compareTo(Instant.now().minus(6L, ChronoUnit.HOURS)) > 0) {
+//         return accountRepository.findAll();
+//      }
+
+      return null;
+   }
 }

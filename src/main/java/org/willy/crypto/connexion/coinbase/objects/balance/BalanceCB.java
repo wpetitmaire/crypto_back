@@ -5,11 +5,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class Balance {
+@Embeddable
+public class BalanceCB {
+
+    @Column(name = "balance_amount")
     private String amount;
+
+    @Column(name = "balance_currency")
     private String currency;
 }

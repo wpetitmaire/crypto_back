@@ -1,6 +1,6 @@
 package org.willy.crypto.connexion.coinbase.objects.transaction;
 
-public enum TransactionType {
+public enum TransactionTypeCB {
     SEND("send"),
     REQUEST("request"),
     TRANSFERT("transfer"),
@@ -15,7 +15,7 @@ public enum TransactionType {
 
     private String type;
 
-    TransactionType(String type) {
+    TransactionTypeCB(String type) {
         this.type = type;
     }
 }

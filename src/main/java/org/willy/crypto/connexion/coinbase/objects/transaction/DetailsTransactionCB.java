@@ -4,15 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.willy.crypto.connexion.coinbase.objects.Pagination;
-
-import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @ToString
-public class TransactionResponse {
-    private Pagination pagination;
-    private List<Transaction> data;
+public class DetailsTransactionCB {
+    private String title;
+    private String subtitle;
 }

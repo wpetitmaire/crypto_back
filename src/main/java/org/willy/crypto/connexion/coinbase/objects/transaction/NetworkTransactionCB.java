@@ -6,11 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
-public class BuyTransaction {
-    private String id;
-    private String resource;
-    private String resource_path;
+public class NetworkTransactionCB {
+    private String status;
+    private String name;
 }

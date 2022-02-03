@@ -1,6 +1,6 @@
 package org.willy.crypto.connexion.coinbase.objects.transaction;
 
-public enum TransactionStatus {
+public enum TransactionStatusCB {
     PENDING("pending"),
     COMPLETED("completed"),
     FAILED("failed"),
@@ -11,7 +11,7 @@ public enum TransactionStatus {
 
     private String status;
 
-    TransactionStatus(String status) {
+    TransactionStatusCB(String status) {
         this.status = status;
     }
 }
