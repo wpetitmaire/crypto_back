@@ -41,14 +41,12 @@ public class CoinbaseApi {
    private final static String SECRET_KEY = System.getProperty("cbSecretKey");
    private final static String API_KEY = System.getProperty("cbApiKey");
    private final static String BASE_URL = "https://api.coinbase.com";
-   private final static String API_VERSION_URL = "/v2";
    private final static String API_VERSION = "";
    private final static Logger logger = LogManager.getLogger(CoinbaseApi.class);
    private final static HttpClient client = HttpClient.newHttpClient();
 
    private LocalDateTime accountsRetrieveDate;
    private final AccountRepository accountRepository;
-
 
    @Autowired
    public CoinbaseApi(AccountRepository accountRepository) {

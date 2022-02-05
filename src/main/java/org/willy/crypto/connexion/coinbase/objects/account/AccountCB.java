@@ -16,6 +16,15 @@ import java.time.LocalDateTime;
 @ToString
 @Entity
 @Table(name = "accountcb")
+/**
+ * <h1>Account ressource from Coinbase</h1>
+ * Description <a href="https://developers.coinbase.com/api/v2?shell#account-resource">Coinbase - account</a>
+ * Composed of :
+ * <ul>
+ *     <li>A currency ressource {@link CurrencyCB}</li>
+ *     <li>A currency ressource {@link BalanceCB}</li>
+ * </ul>
+ */
 public class AccountCB {
 
     @Column(name = "account_id")
