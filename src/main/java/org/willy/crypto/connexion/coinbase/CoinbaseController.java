@@ -3,13 +3,11 @@ package org.willy.crypto.connexion.coinbase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "api/v1/coinbase")
@@ -31,6 +29,13 @@ public class CoinbaseController {
             refresh = false;
         }
         return api.readAccounts(refresh);
+    }
+
+    @GetMapping(path = "/accounts/{id}")
+    public AccountCB getAccount(@PathVariable String id) {
+        logger.info("get account {}", id);
+
+        return api.getAccount(id);
     }
 
     @GetMapping(path = "/test")

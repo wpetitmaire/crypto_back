@@ -15,9 +15,6 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class BalanceCB {
 
-    @Column(name = "balance_amount")
     private String amount;
-
-    @Column(name = "balance_currency")
     private String currency;
 }

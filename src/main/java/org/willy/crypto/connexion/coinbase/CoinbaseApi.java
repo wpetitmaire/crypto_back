@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -130,7 +131,7 @@ public class CoinbaseApi {
       if (testIsATransaction) { // retrieve only one transaction is enough for testing.
          ressourceUrl = "/v2/accounts/"+accountId+"/transactions?&limit=1";
       } else {
-         ressourceUrl = "/v2/accounts/\"+accountId+\"/transactions";
+         ressourceUrl = "/v2/accounts/"+accountId+"/transactions";
       }
 
       do {
@@ -151,6 +152,38 @@ public class CoinbaseApi {
       logger.debug("Transaction number : {}", transactions.size());
 
       return transactions;
+   }
+
+   /**
+    * Get an account ressource that is used or has been used by the user
+    * @param id id of the needed account
+    * @return the account
+    */
+   public AccountCB getAccount(String id) {
+
+      AccountCB account = accountRepository.findById(id).orElse(null);
+
+      logger.info(account);
+
+      // If no account found, calls the API to see if we need to add the ressource to the database
+      if (account == null) {
+         final String ressourceUrl = "/v2/accounts/" + id;
+         HttpResponse<String> response = getRequest(ressourceUrl);
+
+         if (response.statusCode() != HttpStatus.OK.value()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account ressource not found");
+         }
+
+         account = new Gson().fromJson(response.body(), AccountCB.class);
+
+         if (thereIsTransactionsForTheAccount(account.getCurrency().getCode())) {
+            accountRepository.save(account);
+         } else {
+            throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Account ressource not used by the user.");
+         }
+      }
+
+      return account;
    }
 
    /* REQUESTS METHODS */

@@ -27,11 +27,11 @@ import java.time.LocalDateTime;
  */
 public class AccountCB {
 
-    @Column(name = "account_id")
+//    @Column(name = "account_id")
     @Id
     private String id;
 
-    @Column(name = "account_name")
+//    @Column(name = "account_name")
     private String name;
 
     @Column(name = "account_primary")
