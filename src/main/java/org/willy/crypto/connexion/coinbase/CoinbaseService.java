@@ -2,12 +2,10 @@ package org.willy.crypto.connexion.coinbase;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,18 +15,11 @@ import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponseCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionRepository;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponseCB;
+import org.willy.crypto.connexion.coinbase.services.CoinbaseConnexionService;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -37,21 +28,20 @@ import java.util.stream.Collectors;
 
 @Service
 @Scope("singleton")
-public class CoinbaseApi {
+public class CoinbaseService {
 
-   private final static String SECRET_KEY = System.getProperty("cbSecretKey");
-   private final static String API_KEY = System.getProperty("cbApiKey");
-   private final static String BASE_URL = "https://api.coinbase.com";
-   private final static String API_VERSION = "";
-   private final static Logger logger = LogManager.getLogger(CoinbaseApi.class);
-   private final static HttpClient client = HttpClient.newHttpClient();
+   private final static Logger logger = LogManager.getLogger(CoinbaseService.class);
 
-   private LocalDateTime accountsRetrieveDate;
+   private final CoinbaseConnexionService connexionService;
+
    private final AccountRepository accountRepository;
    private final TransactionRepository transactionRepository;
 
+   private LocalDateTime accountsRetrieveDate;
+
    @Autowired
-   public CoinbaseApi(AccountRepository accountRepository, TransactionRepository transactionRepository) {
+   public CoinbaseService(CoinbaseConnexionService connexionService, AccountRepository accountRepository, TransactionRepository transactionRepository) {
+      this.connexionService = connexionService;
       this.accountRepository = accountRepository;
       this.transactionRepository = transactionRepository;
    }
@@ -82,7 +72,7 @@ public class CoinbaseApi {
       Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
       do {
-         getRequestResponse = getRequest(ressourceUrl);
+         getRequestResponse = connexionService.getRequest(ressourceUrl);
          response = getRequestResponse.body();
          accountsResponse = gson.fromJson(response, AccountsResponseCB.class);
          accountList.addAll(accountsResponse.getData());
@@ -120,7 +110,7 @@ public class CoinbaseApi {
       // If no account found, calls the API to see if we need to add the ressource to the database
       if (account == null) {
          final String ressourceUrl = "/v2/accounts/" + id;
-         HttpResponse<String> response = getRequest(ressourceUrl);
+         HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
 
          if (response.statusCode() != HttpStatus.OK.value()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account ressource not found");
@@ -173,7 +163,7 @@ public class CoinbaseApi {
       }
 
       do {
-         getRequestResponse = getRequest(ressourceUrl);
+         getRequestResponse = connexionService.getRequest(ressourceUrl);
          reponse = getRequestResponse.body();
          transactionResponse = gson.fromJson(reponse, TransactionResponseCB.class);
          transactions.addAll(transactionResponse.getData());
@@ -199,106 +189,34 @@ public class CoinbaseApi {
       return transactions;
    }
 
-   /* REQUESTS METHODS */
-
    /**
-    * Send a GET request
-    * @param resourceUrl API resource path
-    * @return get request response
+    * Get a specific transaction
+    * @param transactionId id of the needed transaction
+    * @return the transaction
     */
-   private HttpResponse<String> getRequest(String resourceUrl) {
+   public TransactionCB getTransaction(String accountId, String transactionId) {
+      logger.info("get transaction of ressource {} with id {}", accountId, transactionId);
 
-      final long timestamp = Instant.now().getEpochSecond();
-      final String signature = getSignature(timestamp, HttpMethod.GET, resourceUrl, "");
+      TransactionCB transaction = transactionRepository.findById(transactionId).orElse(null);
 
-      HttpRequest request = HttpRequest.newBuilder()
-              .uri(URI.create(BASE_URL + resourceUrl))
-              .header("CB-ACCESS-KEY", API_KEY)
-              .header("CB-ACCESS-SIGN", signature)
-              .header("CB-ACCESS-TIMESTAMP", String.valueOf(timestamp))
-              .header("CB-VERSION", API_VERSION)
-              .build();
+      if (transaction == null) { // if not found in the DB, call the API ant then save in DB
+         String ressourceUrl = "/v2/accounts/"+ accountId +"/transactions/" + transactionId;
+         HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
 
-      try {
-         return client.send(request, HttpResponse.BodyHandlers.ofString());
-      } catch (IOException | InterruptedException e) {
-         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error sending request to CB");
+         if (response.statusCode() != HttpStatus.OK.value()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found.");
+         }
+
+         transaction = new Gson().fromJson(response.body(), TransactionCB.class);
+         transaction.setRetrieve_date(LocalDateTime.now());
+         transaction.setAssociated_account_id(accountId);
       }
+
+      transactionRepository.save(transaction);
+
+      return transaction;
    }
 
-   /**
-    * Create the encoded signature. Used for each request
-    * @param timestamp number of seconds since Unix Epoch.
-    * @param httpMethod HttpMethod
-    * @param resourcePath api ressource path
-    * @param payload request body
-    * @return encoded signature
-    */
-   private String getSignature(long timestamp, HttpMethod httpMethod, String resourcePath, String payload) {
-
-      String prehash = timestamp + httpMethod.toString() + resourcePath;
-
-      if (httpMethod.equals(HttpMethod.POST) || httpMethod.equals(HttpMethod.PUT)) {
-         prehash += payload;
-      }
-
-      Mac hmacSHA256 = null;
-      try {
-         hmacSHA256 = Mac.getInstance("HmacSHA256");
-      } catch (NoSuchAlgorithmException e) {
-         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Algorithm HmacSHA256 not found in Mac.", e);
-      }
-
-      SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(), "HmacSHA256");
-      try {
-         hmacSHA256.init(secretKeySpec);
-      } catch (InvalidKeyException e) {
-         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "invalid secretKey.", e);
-      }
-      byte[] hash = hmacSHA256.doFinal(prehash.getBytes());
-
-      logger.debug("Signature : " + Hex.encodeHexString(hash));
-
-      return Hex.encodeHexString(hash);
-   }
-
-   public List<AccountCB> testCreation() {
-
-//      CurrencyCB currencyCB = new CurrencyCB("BTC", "Bitcoin", "yellow", 1, 8, "crypto", "^((D|A|9)[a-km-zA-HJ-NP-Z1-9]{25,34})$",
-//              "d9a3edfa-1be7-589c-bd20-c034f3830b60", null);
-//
-//      BalanceCB balanceCB = new BalanceCB("346.97111137", "DOGE");
-//
-//      AccountCB accountCB = new AccountCB("abbb1d77-a818-5393-b29d-45a38230d803", "Portefeuille en DOGE", true, "wallet",
-//              currencyCB, balanceCB, "2021-08-15T13:51:07Z", "2021-08-21T09:31:43Z", "account", "/v2/accounts/abbb1d77-a818-5393-b29d-45a38230d803", true, true);
-//
-//      accountRepository.save(accountCB);
-
-//      accountsRetrieveDate = Instant.now().minus(1L, ChronoUnit.DAYS);
-//      Instant heureLimite = Instant.now().minus(6L, ChronoUnit.HOURS);
-//
-//      System.out.println("Heure derniere recherche : " + accountsRetrieveDate);
-//      System.out.println("Heure limite : " + heureLimite);
-//
-//      int value = accountsRetrieveDate.compareTo(heureLimite);
-//
-//      if (value > 0)
-//         System.out.println("accountsRetrieveDate is greater");
-//      else if (value == 0)
-//         System.out.println("accountsRetrieveDate is equal to heureLimite");
-//      else
-//         System.out.println("heureLimite is greater");
 
 
-
-
-
-//      logger.info(accountsRetrieveDate);
-//
-//      if(accountsRetrieveDate != null && accountsRetrieveDate.compareTo(Instant.now().minus(6L, ChronoUnit.HOURS)) > 0) {
-//         return accountRepository.findAll();
-//      }
-
-      return null;
-   }
 }

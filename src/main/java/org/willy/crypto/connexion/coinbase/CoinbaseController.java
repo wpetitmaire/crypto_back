@@ -8,7 +8,6 @@ import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "api/v1/coinbase")
@@ -16,10 +15,10 @@ public class CoinbaseController {
 
     Logger logger = LoggerFactory.getLogger(CoinbaseController.class);
 
-    private final CoinbaseApi api;
+    private final CoinbaseService api;
 
     @Autowired
-    public CoinbaseController(CoinbaseApi coinbaseApi) { this.api = coinbaseApi; }
+    public CoinbaseController(CoinbaseService coinbaseApi) { this.api = coinbaseApi; }
 
     @GetMapping(path = "/accounts")
     public List<AccountCB> readAccounts(@RequestParam(required = false) Boolean refresh) {
@@ -44,6 +43,13 @@ public class CoinbaseController {
         logger.info("Read transactions for account : " + id);
 
         return api.readTransactionsOfAAccount(id, false);
+    }
+
+    @GetMapping(path = "/accounts/{accountId}/transactions/{transactionId}")
+    public TransactionCB getTransaction(@PathVariable String accountId, @PathVariable String transactionId) {
+        logger.info("Get transaction account {} transaction {}", accountId, transactionId);
+
+        return api.getTransaction(accountId, transactionId);
     }
 
 }
