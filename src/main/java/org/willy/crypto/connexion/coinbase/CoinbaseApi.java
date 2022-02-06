@@ -15,6 +15,7 @@ import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponseCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
+import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionRepository;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponseCB;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
@@ -32,7 +33,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,10 +48,12 @@ public class CoinbaseApi {
 
    private LocalDateTime accountsRetrieveDate;
    private final AccountRepository accountRepository;
+   private final TransactionRepository transactionRepository;
 
    @Autowired
-   public CoinbaseApi(AccountRepository accountRepository) {
+   public CoinbaseApi(AccountRepository accountRepository, TransactionRepository transactionRepository) {
       this.accountRepository = accountRepository;
+      this.transactionRepository = transactionRepository;
    }
 
    /**
@@ -104,56 +106,6 @@ public class CoinbaseApi {
       return accountList;
    }
 
-   public boolean thereIsTransactionsForTheAccount(String accountId){
-      logger.info("thereIsTransactionsForTheAccount : " + accountId);
-
-      return readTransactionsOfAAccount(accountId, true).size() > 0;
-   }
-
-   //v2/accounts/:account_id/transactions
-
-   /**
-    * Get the list of the transactions for an account
-    * @param accountId Id of the account
-    * @param testIsATransaction true if we just need to know if it exists at least one transaction
-    * @return List of transactions
-    */
-   public List<TransactionCB> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) {
-      logger.info("Read transactions from ressource : " + accountId + " - just test ? : " + testIsATransaction);
-
-      List<TransactionCB> transactions = new ArrayList<>();
-      boolean isNextPage;
-      HttpResponse<String> getRequestResponse;
-      String reponse;
-      TransactionResponseCB transactionResponse;
-      String ressourceUrl;
-
-      if (testIsATransaction) { // retrieve only one transaction is enough for testing.
-         ressourceUrl = "/v2/accounts/"+accountId+"/transactions?&limit=1";
-      } else {
-         ressourceUrl = "/v2/accounts/"+accountId+"/transactions";
-      }
-
-      do {
-         getRequestResponse = getRequest(ressourceUrl);
-         reponse = getRequestResponse.body();
-         transactionResponse = new Gson().fromJson(reponse, TransactionResponseCB.class);
-         transactions.addAll(transactionResponse.getData());
-
-         // If there is another page, change ressource url and do it again
-         if (!testIsATransaction) {
-            isNextPage = transactionResponse.getPagination().getNext_uri() != null;
-            ressourceUrl = transactionResponse.getPagination().getNext_uri();
-         }
-         else
-            isNextPage = false;
-      } while (isNextPage);
-
-      logger.debug("Transaction number : {}", transactions.size());
-
-      return transactions;
-   }
-
    /**
     * Get an account ressource that is used or has been used by the user
     * @param id id of the needed account
@@ -184,6 +136,67 @@ public class CoinbaseApi {
       }
 
       return account;
+   }
+
+   /**
+    * Test is there is at least one transaction or not for an account
+    * @param accountId id of the account
+    * @return true if there is at least one transaction
+    */
+   public boolean thereIsTransactionsForTheAccount(String accountId){
+      logger.info("thereIsTransactionsForTheAccount : " + accountId);
+
+      return readTransactionsOfAAccount(accountId, true).size() > 0;
+   }
+
+   /**
+    * Get the list of the transactions for an account
+    * @param accountId Id of the account
+    * @param testIsATransaction true if we just need to know if it exists at least one transaction
+    * @return List of transactions
+    */
+   public List<TransactionCB> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) {
+      logger.info("Read transactions from ressource : " + accountId + " - just test ? : " + testIsATransaction);
+
+      List<TransactionCB> transactions = new ArrayList<>();
+      boolean isNextPage;
+      HttpResponse<String> getRequestResponse;
+      String reponse;
+      TransactionResponseCB transactionResponse;
+      String ressourceUrl;
+      Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
+
+      if (testIsATransaction) { // retrieve only one transaction is enough for testing.
+         ressourceUrl = "/v2/accounts/"+accountId+"/transactions?&limit=1";
+      } else {
+         ressourceUrl = "/v2/accounts/"+accountId+"/transactions";
+      }
+
+      do {
+         getRequestResponse = getRequest(ressourceUrl);
+         reponse = getRequestResponse.body();
+         transactionResponse = gson.fromJson(reponse, TransactionResponseCB.class);
+         transactions.addAll(transactionResponse.getData());
+
+         // If there is another page, change ressource url and do it again
+         if (!testIsATransaction) {
+            isNextPage = transactionResponse.getPagination().getNext_uri() != null;
+            ressourceUrl = transactionResponse.getPagination().getNext_uri();
+         }
+         else
+            isNextPage = false;
+      } while (isNextPage);
+
+      transactions.forEach(transaction -> {
+         transaction.setRetrieve_date(LocalDateTime.now());
+         transaction.setAssociated_account_id(accountId);
+      });
+
+      transactionRepository.saveAll(transactions);
+
+      logger.debug("Transaction number : {}", transactions.size());
+
+      return transactions;
    }
 
    /* REQUESTS METHODS */

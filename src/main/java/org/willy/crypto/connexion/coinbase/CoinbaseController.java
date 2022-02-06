@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
+import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,8 +39,11 @@ public class CoinbaseController {
         return api.getAccount(id);
     }
 
-    @GetMapping(path = "/test")
-    public List<AccountCB> testSave() {
-        return api.testCreation();
+    @GetMapping(path = "/accounts/{id}/transactions")
+    public List<TransactionCB> readTransactions(@PathVariable String id) {
+        logger.info("Read transactions for account : " + id);
+
+        return api.readTransactionsOfAAccount(id, false);
     }
+
 }

@@ -7,6 +7,7 @@ import lombok.ToString;
 import org.willy.crypto.connexion.coinbase.objects.balance.BalanceCB;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -65,5 +66,8 @@ public class TransactionCB {
             @AttributeOverride(name = "resource_path", column = @Column(name = "transaction_from_party_ressource_path"))
     })
     private PartyTransactionCB from;
+
+    private LocalDateTime retrieve_date;
+    private String associated_account_id;
 
 }
