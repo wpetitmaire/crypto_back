@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
+import org.willy.crypto.connexion.coinbase.services.CoinbaseAccountsService;
+import org.willy.crypto.connexion.coinbase.services.CoinbaseTransactionsService;
 
 import java.util.List;
 
@@ -15,10 +17,14 @@ public class CoinbaseController {
 
     Logger logger = LoggerFactory.getLogger(CoinbaseController.class);
 
-    private final CoinbaseService api;
+    private final CoinbaseAccountsService accountsService;
+    private final CoinbaseTransactionsService transactionsService;
 
     @Autowired
-    public CoinbaseController(CoinbaseService coinbaseApi) { this.api = coinbaseApi; }
+    public CoinbaseController(CoinbaseAccountsService accountsService, CoinbaseTransactionsService transactionsService) {
+        this.accountsService = accountsService;
+        this.transactionsService = transactionsService;
+    }
 
     @GetMapping(path = "/accounts")
     public List<AccountCB> readAccounts(@RequestParam(required = false) Boolean refresh) {
@@ -28,28 +34,28 @@ public class CoinbaseController {
         if (refresh == null) {
             refresh = false;
         }
-        return api.readAccounts(refresh);
+        return accountsService.readAccounts(refresh);
     }
 
     @GetMapping(path = "/accounts/{id}")
     public AccountCB getAccount(@PathVariable String id) {
         logger.info("get account {}", id);
 
-        return api.getAccount(id);
+        return accountsService.getAccount(id);
     }
 
     @GetMapping(path = "/accounts/{id}/transactions")
     public List<TransactionCB> readTransactions(@PathVariable String id) {
         logger.info("Read transactions for account : " + id);
 
-        return api.readTransactionsOfAAccount(id, false);
+        return transactionsService.readTransactionsOfAAccount(id, false);
     }
 
     @GetMapping(path = "/accounts/{accountId}/transactions/{transactionId}")
     public TransactionCB getTransaction(@PathVariable String accountId, @PathVariable String transactionId) {
         logger.info("Get transaction account {} transaction {}", accountId, transactionId);
 
-        return api.getTransaction(accountId, transactionId);
+        return transactionsService.getTransaction(accountId, transactionId);
     }
 
 }

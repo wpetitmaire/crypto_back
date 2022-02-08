@@ -8,7 +8,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import org.willy.crypto.connexion.coinbase.CoinbaseService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
