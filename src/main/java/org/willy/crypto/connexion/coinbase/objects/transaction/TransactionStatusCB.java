@@ -1,17 +1,39 @@
 package org.willy.crypto.connexion.coinbase.objects.transaction;
 
+import com.google.gson.annotations.SerializedName;
+
+/**
+ * Enumeration of transaction status
+ * <ul>
+ *     <li>pending</li>
+ *     <li>completed</li>
+ *     <li>failed</li>
+ *     <li>expired</li>
+ *     <li>canceled</li>
+ *     <li>waiting_for_signature</li>
+ *     <li>waiting_for_clearing</li>
+ * </ul>
+ */
 public enum TransactionStatusCB {
-    PENDING("pending"),
-    COMPLETED("completed"),
-    FAILED("failed"),
-    EXPIRED("expired"),
-    CANCELED("canceled"),
-    WAITING_FOR_SIGNATURE("waiting_for_signature"),
-    WAITING_FOR_CLEARING("waiting_for_clearing");
+    @SerializedName("pending")
+    PENDING,
 
-    private String status;
+    @SerializedName("completed")
+    COMPLETED,
 
-    TransactionStatusCB(String status) {
-        this.status = status;
-    }
+    @SerializedName("failed")
+    FAILED,
+
+    @SerializedName("expired")
+    EXPIRED,
+
+    @SerializedName("canceled")
+    CANCELED,
+
+    @SerializedName("waiting_for_signature")
+    WAITING_FOR_SIGNATURE,
+
+    @SerializedName("waiting_for_clearing")
+    WAITING_FOR_CLEARING;
+
 }

@@ -2,17 +2,21 @@ package org.willy.crypto.connexion.coinbase.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
+import org.willy.crypto.connexion.coinbase.objects.buy.BuyResponseCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionRepository;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponseCB;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
+import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -119,4 +123,38 @@ public class CoinbaseTransactionsService {
 
         return transaction;
     }
+
+    public List<BuyCB> getBuys(String accountId) {
+        logger.info("get buys for account {}", accountId);
+
+//        JsonObject debugStringResponse = null;
+
+        List<BuyCB> buys = new ArrayList<>();
+        boolean isNextPage;
+        HttpResponse<String> response;
+        String responseBody;
+        BuyResponseCB buyResponse;
+        String ressourceUrl;
+        Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
+
+        ressourceUrl = "/v2/accounts/" + accountId + "/buys";
+
+        do {
+            response = connexionService.getRequest(ressourceUrl);
+            responseBody = response.body();
+
+//            debugStringResponse = gson.fromJson(responseBody, JsonObject.class);
+//            logger.info(gson.toJson(debugStringResponse));
+
+            buyResponse = gson.fromJson(responseBody, BuyResponseCB.class);
+            buys.addAll(buyResponse.getData());
+
+            // If there is another page, change ressource url and do it again
+            isNextPage = buyResponse.getPagination().getNext_uri() != null;
+            ressourceUrl = buyResponse.getPagination().getNext_uri();
+        } while (isNextPage);
+
+        return buys;
+    }
+
 }

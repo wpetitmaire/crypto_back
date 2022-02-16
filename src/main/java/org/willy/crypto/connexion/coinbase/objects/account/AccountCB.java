@@ -4,49 +4,66 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.willy.crypto.connexion.coinbase.objects.balance.BalanceCB;
+import org.willy.crypto.connexion.coinbase.objects.MoneyHashCB;
 import org.willy.crypto.connexion.coinbase.objects.currency.CurrencyCB;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * <strong>Account ressource from Coinbase</strong>
+ * Description <a href="https://docs.cloud.coinbase.com/sign-in-with-coinbase/docs/api-accounts#show-an-account">Coinbase - account</a>
+ * Composed of :
+ * <ul>
+ *     <li>A currency ressource {@link CurrencyCB}</li>
+ *     <li>A currency ressource {@link MoneyHashCB}</li>
+ * </ul>
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @Entity
 @Table(name = "accountcb")
-/**
- * <h1>Account ressource from Coinbase</h1>
- * Description <a href="https://developers.coinbase.com/api/v2?shell#account-resource">Coinbase - account</a>
- * Composed of :
- * <ul>
- *     <li>A currency ressource {@link CurrencyCB}</li>
- *     <li>A currency ressource {@link BalanceCB}</li>
- * </ul>
- */
 public class AccountCB {
 
-//    @Column(name = "account_id")
+
+    /**
+     * Resource ID
+     */
     @Id
     private String id;
 
-//    @Column(name = "account_name")
+    /**
+     * User or system defined name
+     */
     private String name;
 
+    /**
+     * Primary account
+     */
     @Column(name = "account_primary")
     private Boolean primary;
 
+    /**
+     * Account’s type. Available values: wallet, fiat, vault
+     */
     @Column(name = "account_type")
     private String type;
 
+    /**
+     * Account’s currency
+     */
     @Embedded
     @Column(name = "account_currency")
     private CurrencyCB currency;
 
+    /**
+     * Balance in BTC or ETH
+     */
     @Embedded
     @Column(name = "account_balance")
-    private BalanceCB balance;
+    private MoneyHashCB balance;
 
     private String created_at;
     private String updated_at;
@@ -55,5 +72,8 @@ public class AccountCB {
     private Boolean allow_deposits;
     private Boolean allow_withdrawals;
 
+    /**
+     * Date of the last retrieve
+     */
     private LocalDateTime account_retrieve_date;
 }
