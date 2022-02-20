@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponseCB;
@@ -96,7 +97,7 @@ public class CoinbaseAccountsService {
      * @param id id of the needed account
      * @return the account
      */
-    public AccountCB getAccount(String id) {
+    public AccountCB getAccount(String id) throws CoinbaseApiException {
 
         AccountCB account = accountRepository.findById(id).orElse(null);
 
@@ -108,7 +109,7 @@ public class CoinbaseAccountsService {
             HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
 
             if (response.statusCode() != HttpStatus.OK.value()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account ressource not found");
+                throw new CoinbaseApiException("Account ressource not found", HttpStatus.BAD_REQUEST);
             }
 
             account = new Gson().fromJson(response.body(), AccountCB.class);
@@ -116,7 +117,7 @@ public class CoinbaseAccountsService {
             if (transactionsService.thereIsTransactionsForTheAccount(account.getCurrency().getCode())) {
                 accountRepository.save(account);
             } else {
-                throw new ResponseStatusException(HttpStatus.METHOD_NOT_ALLOWED, "Account ressource not used by the user.");
+                throw new CoinbaseApiException("Account ressource not used by the user.", HttpStatus.METHOD_NOT_ALLOWED);
             }
         }
 

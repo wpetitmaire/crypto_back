@@ -1,68 +1,112 @@
 package org.willy.crypto.connexion.coinbase;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
+import org.willy.crypto.connexion.coinbase.objects.sell.SellCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseAccountsService;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseTransactionsService;
 
 import java.util.List;
 
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RestController
 @RequestMapping(path = "api/v1/coinbase")
 public class CoinbaseController {
 
-    Logger logger = LoggerFactory.getLogger(CoinbaseController.class);
+    final static Logger logger = LoggerFactory.getLogger(CoinbaseController.class);
 
-    private final CoinbaseAccountsService accountsService;
-    private final CoinbaseTransactionsService transactionsService;
-
-    @Autowired
-    public CoinbaseController(CoinbaseAccountsService accountsService, CoinbaseTransactionsService transactionsService) {
-        this.accountsService = accountsService;
-        this.transactionsService = transactionsService;
-    }
+    final CoinbaseAccountsService accountsService;
+    final CoinbaseTransactionsService transactionsService;
 
     @GetMapping(path = "/accounts")
-    public List<AccountCB> readAccounts(@RequestParam(required = false) Boolean refresh) {
-
+    public ResponseEntity<List<AccountCB>> readAccounts(@RequestParam(required = false) Boolean refresh) {
         logger.info(String.valueOf(refresh));
 
         if (refresh == null) {
             refresh = false;
         }
-        return accountsService.readAccounts(refresh);
+        List<AccountCB> accounts = accountsService.readAccounts(refresh);
+
+        if (accounts.size() > 0) {
+            return new ResponseEntity<>(accounts, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping(path = "/accounts/{id}")
-    public AccountCB getAccount(@PathVariable String id) {
+    public ResponseEntity<AccountCB> getAccount(@PathVariable String id) throws CoinbaseApiException {
         logger.info("get account {}", id);
-
-        return accountsService.getAccount(id);
+        return new ResponseEntity<>(accountsService.getAccount(id), HttpStatus.OK);
     }
 
     @GetMapping(path = "/accounts/{id}/transactions")
-    public List<TransactionCB> readTransactions(@PathVariable String id) {
+    public ResponseEntity<List<TransactionCB>> readTransactions(@PathVariable String id) {
         logger.info("Read transactions for account : " + id);
 
-        return transactionsService.readTransactionsOfAAccount(id, false);
+        List<TransactionCB> transactions = transactionsService.readTransactionsOfAAccount(id, false);
+
+        if (transactions.size() > 0) {
+            return new ResponseEntity<>(transactions, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping(path = "/accounts/{accountId}/transactions/{transactionId}")
-    public TransactionCB getTransaction(@PathVariable String accountId, @PathVariable String transactionId) {
+    public ResponseEntity<TransactionCB> getTransaction(@PathVariable String accountId, @PathVariable String transactionId) throws CoinbaseApiException {
         logger.info("Get transaction account {} transaction {}", accountId, transactionId);
 
-        return transactionsService.getTransaction(accountId, transactionId);
+        return new ResponseEntity<>(transactionsService.getTransaction(accountId, transactionId), HttpStatus.OK);
     }
 
+    /**
+     * Read buys of an account
+     * @param id Id oh the account
+     * @return List of buys
+     */
     @GetMapping(path = "/accounts/{id}/buys")
-    public List<BuyCB> readBuys(@PathVariable String id) {
+    public ResponseEntity<List<BuyCB>> readBuys(@PathVariable String id) {
         logger.info("read buys for account {}", id);
-        return transactionsService.getBuys(id);
+
+        List<BuyCB> buys = transactionsService.getBuys(id);
+
+        if (buys.size() > 0) {
+            return new ResponseEntity<>(buys, HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+    }
+
+    /**
+     * Read sells of an account
+     * @param id Id oh the account
+     * @return List of sells
+     */
+    @GetMapping(path = "/accounts/{id}/sells")
+    public ResponseEntity<List<SellCB>> readSells(@PathVariable String id) {
+        logger.info("read sells for account {}", id);
+
+        List<SellCB> sells = transactionsService.getSells(id);
+
+        if (sells.size() > 0) {
+            return new ResponseEntity<>(sells, HttpStatus.OK);
+        }
+        else {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
     }
 
 }

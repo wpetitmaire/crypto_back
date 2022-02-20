@@ -48,6 +48,7 @@ public class CoinbaseConnexionService {
                 .header("CB-ACCESS-SIGN", signature)
                 .header("CB-ACCESS-TIMESTAMP", String.valueOf(timestamp))
                 .header("CB-VERSION", "")
+                .header("Accept-Language", "fr")
                 .build();
 
         try {
