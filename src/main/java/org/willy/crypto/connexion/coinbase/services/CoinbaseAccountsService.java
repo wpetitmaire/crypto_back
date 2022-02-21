@@ -2,6 +2,10 @@ package org.willy.crypto.connexion.coinbase.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,25 +26,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Service
 @Scope("singleton")
 public class CoinbaseAccountsService {
 
-    private final static Logger logger = LogManager.getLogger(CoinbaseAccountsService.class);
+    final static Logger logger = LogManager.getLogger(CoinbaseAccountsService.class);
 
-    private final CoinbaseConnexionService connexionService;
-    private final CoinbaseTransactionsService transactionsService;
+    final CoinbaseConnexionService connexionService;
+    final CoinbaseTransactionsService transactionsService;
 
-    private final AccountRepository accountRepository;
+    final AccountRepository accountRepository;
 
-    private LocalDateTime accountsRetrieveDate;
-
-    @Autowired
-    public CoinbaseAccountsService(CoinbaseConnexionService connexionService, CoinbaseTransactionsService transactionsService, AccountRepository accountRepository) {
-        this.connexionService = connexionService;
-        this.transactionsService = transactionsService;
-        this.accountRepository = accountRepository;
-    }
+    LocalDateTime accountsRetrieveDate;
 
     /**
      * Return all Coinbase accounts
@@ -83,7 +82,6 @@ public class CoinbaseAccountsService {
         // Check each account and keep only those who are/were used by the user
         accountList = accountList.stream()
                 .filter(account -> transactionsService.thereIsTransactionsForTheAccount(account.getCurrency().getCode()))
-                .peek(account -> account.setAccount_retrieve_date(accountsRetrieveDate))
                 .collect(Collectors.toList());
 
         // save the result in the DB and save the retrieve data
@@ -123,5 +121,6 @@ public class CoinbaseAccountsService {
 
         return account;
     }
+
 
 }

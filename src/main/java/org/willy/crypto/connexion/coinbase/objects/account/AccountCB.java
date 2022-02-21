@@ -1,9 +1,8 @@
 package org.willy.crypto.connexion.coinbase.objects.account;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.willy.crypto.connexion.coinbase.listeners.AccountListener;
 import org.willy.crypto.connexion.coinbase.objects.MoneyHashCB;
 import org.willy.crypto.connexion.coinbase.objects.currency.CurrencyCB;
 
@@ -23,7 +22,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
+@EntityListeners(AccountListener.class)
 @Table(name = "accountcb")
 public class AccountCB {
 
@@ -32,48 +33,48 @@ public class AccountCB {
      * Resource ID
      */
     @Id
-    private String id;
+    String id;
 
     /**
      * User or system defined name
      */
-    private String name;
+    String name;
 
     /**
      * Primary account
      */
     @Column(name = "account_primary")
-    private Boolean primary;
+    Boolean primary;
 
     /**
      * Account’s type. Available values: wallet, fiat, vault
      */
     @Column(name = "account_type")
-    private String type;
+    String type;
 
     /**
      * Account’s currency
      */
     @Embedded
     @Column(name = "account_currency")
-    private CurrencyCB currency;
+    CurrencyCB currency;
 
     /**
      * Balance in BTC or ETH
      */
     @Embedded
     @Column(name = "account_balance")
-    private MoneyHashCB balance;
+    MoneyHashCB balance;
 
-    private String created_at;
-    private String updated_at;
-    private String resource;
-    private String resource_path;
-    private Boolean allow_deposits;
-    private Boolean allow_withdrawals;
+    String created_at;
+    String updated_at;
+    String resource;
+    String resource_path;
+    Boolean allow_deposits;
+    Boolean allow_withdrawals;
 
     /**
      * Date of the last retrieve
      */
-    private LocalDateTime account_retrieve_date;
+    LocalDateTime account_retrieve_date;
 }

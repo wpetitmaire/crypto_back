@@ -2,13 +2,14 @@ package org.willy.crypto.connexion.coinbase.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyResponseCB;
@@ -19,24 +20,19 @@ import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionReposi
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponseCB;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
-import java.lang.reflect.Type;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Service
-@Scope("singleton")
 public class CoinbaseTransactionsService {
 
-    private final static Logger logger = LogManager.getLogger(CoinbaseTransactionsService.class);
-    private final CoinbaseConnexionService connexionService;
-    private final TransactionRepository transactionRepository;
-
-    public CoinbaseTransactionsService(CoinbaseConnexionService connexionService, TransactionRepository transactionRepository) {
-        this.connexionService = connexionService;
-        this.transactionRepository = transactionRepository;
-    }
+    final static Logger logger = LogManager.getLogger(CoinbaseTransactionsService.class);
+    final CoinbaseConnexionService connexionService;
+    final TransactionRepository transactionRepository;
 
     /**
      * Test is there is at least one transaction or not for an account
@@ -45,7 +41,6 @@ public class CoinbaseTransactionsService {
      */
     public boolean thereIsTransactionsForTheAccount(String accountId){
         logger.info("thereIsTransactionsForTheAccount : " + accountId);
-
         return readTransactionsOfAAccount(accountId, true).size() > 0;
     }
 
@@ -187,5 +182,7 @@ public class CoinbaseTransactionsService {
 
         return sells;
     }
+
+
 
 }

@@ -13,8 +13,10 @@ import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
 import org.willy.crypto.connexion.coinbase.objects.sell.SellCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
+import org.willy.crypto.connexion.coinbase.objects.user.UserCB;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseAccountsService;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseTransactionsService;
+import org.willy.crypto.connexion.coinbase.services.CoinbaseUserService;
 
 import java.util.List;
 
@@ -28,6 +30,7 @@ public class CoinbaseController {
 
     final CoinbaseAccountsService accountsService;
     final CoinbaseTransactionsService transactionsService;
+    final CoinbaseUserService coinbaseUserService;
 
     @GetMapping(path = "/accounts")
     public ResponseEntity<List<AccountCB>> readAccounts(@RequestParam(required = false) Boolean refresh) {
@@ -109,4 +112,8 @@ public class CoinbaseController {
         }
     }
 
+    @GetMapping(path = "/user")
+    public UserCB getCurrentUser() throws CoinbaseApiException {
+        return coinbaseUserService.getUser();
+    }
 }
