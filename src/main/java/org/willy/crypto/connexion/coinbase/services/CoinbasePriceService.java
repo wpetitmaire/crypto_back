@@ -16,7 +16,10 @@ import org.willy.crypto.connexion.coinbase.objects.price.PriceResponseCB;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -27,10 +30,21 @@ public class CoinbasePriceService {
     final CoinbaseConnexionService connexionService;
 
     public PriceCB getPrice(String baseCurrency) throws CoinbaseApiException {
+        return getPrice(baseCurrency, null);
+    }
+
+    public PriceCB getPrice(String baseCurrency, String date) throws CoinbaseApiException {
         logger.info("Get price of {}", baseCurrency);
         String userNativeCurrency = userService.getUser().getNative_currency();
         String ressourceUrl = "/v2/prices/" + baseCurrency + "-" + userNativeCurrency + "/spot";
-        HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
+
+        HttpResponse<String> response;
+        if (date != null) {
+            HashMap<String,String> parameters = new HashMap<>() {{ put("date", date); }};
+            response = connexionService.getRequest(ressourceUrl, parameters);
+        } else {
+            response = connexionService.getRequest(ressourceUrl);
+        }
         Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
         if (response.statusCode() != HttpStatus.OK.value()) {

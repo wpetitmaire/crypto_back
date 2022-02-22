@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class AccountsResponseCB {
+public class AccountsPaginationResponseCB {
 
     /**
      * Coinbase pagination basic structure

@@ -2,21 +2,20 @@ package org.willy.crypto.connexion.coinbase.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountsResponseCB;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountResponseCB;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountsPaginationResponseCB;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
@@ -63,13 +62,13 @@ public class CoinbaseAccountsService {
         String ressourceUrl = "/v2/accounts";
         HttpResponse<String> getRequestResponse;
         String response;
-        AccountsResponseCB accountsResponse;
+        AccountsPaginationResponseCB accountsResponse;
         Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
         do {
             getRequestResponse = connexionService.getRequest(ressourceUrl);
             response = getRequestResponse.body();
-            accountsResponse = gson.fromJson(response, AccountsResponseCB.class);
+            accountsResponse = gson.fromJson(response, AccountsPaginationResponseCB.class);
             accountList.addAll(accountsResponse.getData());
 
             // If there is another page, change ressource url and do it again
@@ -98,6 +97,7 @@ public class CoinbaseAccountsService {
     public AccountCB getAccount(String id) throws CoinbaseApiException {
 
         AccountCB account = accountRepository.findById(id).orElse(null);
+        JsonObject debugStringResponse = null;
 
         logger.info(account);
 
@@ -105,12 +105,18 @@ public class CoinbaseAccountsService {
         if (account == null) {
             final String ressourceUrl = "/v2/accounts/" + id;
             HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
+            Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
+
+            logger.info("après requête");
+
+            debugStringResponse = gson.fromJson(response.body(), JsonObject.class);
+            logger.info(gson.toJson(debugStringResponse));
 
             if (response.statusCode() != HttpStatus.OK.value()) {
                 throw new CoinbaseApiException("Account ressource not found", HttpStatus.BAD_REQUEST);
             }
 
-            account = new Gson().fromJson(response.body(), AccountCB.class);
+            account = gson.fromJson(response.body(), AccountResponseCB.class).getData();
 
             if (transactionsService.thereIsTransactionsForTheAccount(account.getCurrency().getCode())) {
                 accountRepository.save(account);

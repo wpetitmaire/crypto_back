@@ -121,7 +121,8 @@ public class CoinbaseController {
     }
 
     @GetMapping("/price/{baseCurrency}")
-    public PriceCB getPrice(@PathVariable String baseCurrency) throws CoinbaseApiException {
-        return priceService.getPrice(baseCurrency);
+    public PriceCB getPrice(@PathVariable String baseCurrency, @RequestParam(required = false) String date) throws CoinbaseApiException {
+        return priceService.getPrice(baseCurrency, date);
     }
+
 }
