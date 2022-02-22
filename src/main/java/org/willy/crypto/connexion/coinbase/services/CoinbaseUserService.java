@@ -21,6 +21,7 @@ import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -33,6 +34,11 @@ public class CoinbaseUserService {
     final UserRepository userRepository;
 
     public UserCB getUser() throws CoinbaseApiException {
+
+        List<UserCB> users = userRepository.findAll();
+        if (users.size() > 0) {
+            return users.get(0);
+        }
 
         final String ressourceUrl = "/v2/user";
         HttpResponse<String> response = connexionService.getRequest(ressourceUrl);

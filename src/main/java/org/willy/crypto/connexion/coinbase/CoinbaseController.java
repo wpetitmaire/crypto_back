@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
+import org.willy.crypto.connexion.coinbase.objects.price.PriceCB;
 import org.willy.crypto.connexion.coinbase.objects.sell.SellCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 import org.willy.crypto.connexion.coinbase.objects.user.UserCB;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseAccountsService;
+import org.willy.crypto.connexion.coinbase.services.CoinbasePriceService;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseTransactionsService;
 import org.willy.crypto.connexion.coinbase.services.CoinbaseUserService;
 
@@ -31,6 +33,7 @@ public class CoinbaseController {
     final CoinbaseAccountsService accountsService;
     final CoinbaseTransactionsService transactionsService;
     final CoinbaseUserService coinbaseUserService;
+    final CoinbasePriceService priceService;
 
     @GetMapping(path = "/accounts")
     public ResponseEntity<List<AccountCB>> readAccounts(@RequestParam(required = false) Boolean refresh) {
@@ -115,5 +118,10 @@ public class CoinbaseController {
     @GetMapping(path = "/user")
     public UserCB getCurrentUser() throws CoinbaseApiException {
         return coinbaseUserService.getUser();
+    }
+
+    @GetMapping("/price/{baseCurrency}")
+    public PriceCB getPrice(@PathVariable String baseCurrency) throws CoinbaseApiException {
+        return priceService.getPrice(baseCurrency);
     }
 }
