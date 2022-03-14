@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.Embeddable;
+import java.math.BigDecimal;
 
 /**
  * <strong>Basic Coinbase MoneyHash structure</strong>
@@ -22,6 +23,6 @@ public class MoneyHashCB {
      * <strong>Amount of money</strong>
      * <p>Formatted with currency decimals</p>
      */
-    private String amount;
+    private BigDecimal amount;
     private String currency;
 }

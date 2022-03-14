@@ -11,14 +11,12 @@ import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
+import org.willy.crypto.connexion.coinbase.objects.health.AccountHealthCB;
 import org.willy.crypto.connexion.coinbase.objects.price.PriceCB;
 import org.willy.crypto.connexion.coinbase.objects.sell.SellCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionCB;
 import org.willy.crypto.connexion.coinbase.objects.user.UserCB;
-import org.willy.crypto.connexion.coinbase.services.CoinbaseAccountsService;
-import org.willy.crypto.connexion.coinbase.services.CoinbasePriceService;
-import org.willy.crypto.connexion.coinbase.services.CoinbaseTransactionsService;
-import org.willy.crypto.connexion.coinbase.services.CoinbaseUserService;
+import org.willy.crypto.connexion.coinbase.services.*;
 
 import java.util.List;
 
@@ -34,6 +32,7 @@ public class CoinbaseController {
     final CoinbaseTransactionsService transactionsService;
     final CoinbaseUserService coinbaseUserService;
     final CoinbasePriceService priceService;
+    final CoinbaseHealthService healthService;
 
     @GetMapping(path = "/accounts")
     public ResponseEntity<List<AccountCB>> readAccounts(@RequestParam(required = false) Boolean refresh) {
@@ -116,13 +115,24 @@ public class CoinbaseController {
     }
 
     @GetMapping(path = "/user")
-    public UserCB getCurrentUser() throws CoinbaseApiException {
-        return coinbaseUserService.getUser();
+    public ResponseEntity<UserCB> getCurrentUser() throws CoinbaseApiException {
+        return new ResponseEntity<>(coinbaseUserService.getUser(), HttpStatus.OK);
     }
 
     @GetMapping("/price/{baseCurrency}")
-    public PriceCB getPrice(@PathVariable String baseCurrency, @RequestParam(required = false) String date) throws CoinbaseApiException {
-        return priceService.getPrice(baseCurrency, date);
+    public ResponseEntity<PriceCB> getPrice(@PathVariable String baseCurrency, @RequestParam(required = false) String date) throws CoinbaseApiException {
+        return new ResponseEntity<>(priceService.getPrice(baseCurrency, date), HttpStatus.OK);
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<List<AccountHealthCB>> accountsHealth() throws CoinbaseApiException {
+        List<AccountHealthCB> accountHealthCBList = healthService.getAccountsHealth();
+
+        if (accountHealthCBList.size() > 0) {
+            return new ResponseEntity<>(accountHealthCBList, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
     }
 
 }

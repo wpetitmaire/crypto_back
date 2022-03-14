@@ -30,7 +30,11 @@ public class CoinbasePriceService {
     final CoinbaseConnexionService connexionService;
 
     public PriceCB getPrice(String baseCurrency) throws CoinbaseApiException {
-        return getPrice(baseCurrency, null);
+        return getPrice(baseCurrency, DateTimeFormatter.ofPattern("uuuu-MM-dd").format(LocalDate.now()));
+    }
+
+    public PriceCB getPrice(String baseCurrency, LocalDate date) throws CoinbaseApiException {
+        return getPrice(baseCurrency, DateTimeFormatter.ofPattern("uuuu-MM-dd").format(date));
     }
 
     public PriceCB getPrice(String baseCurrency, String date) throws CoinbaseApiException {
