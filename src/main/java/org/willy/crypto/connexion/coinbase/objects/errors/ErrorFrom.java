@@ -1,13 +1,14 @@
-package org.willy.crypto.connexion.coinbase.objects.account;
+package org.willy.crypto.connexion.coinbase.objects.errors;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AccountResponseCB {
-    AccountCB data;
+public class ErrorFrom {
+    String id;
+    String message;
 }

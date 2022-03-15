@@ -2,21 +2,19 @@ package org.willy.crypto.connexion.coinbase.services;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
-import org.willy.crypto.connexion.coinbase.objects.buy.BuyResponseCB;
-import org.willy.crypto.connexion.coinbase.objects.user.UserCB;
+import org.willy.crypto.connexion.coinbase.objects.user.User;
 import org.willy.crypto.connexion.coinbase.objects.user.UserRepository;
-import org.willy.crypto.connexion.coinbase.objects.user.UserResponseCB;
+import org.willy.crypto.connexion.coinbase.objects.user.UserResponse;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
@@ -25,18 +23,18 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Log4j2
 @Service
 @Scope("singleton")
-public class CoinbaseUserService {
+public class UserService {
 
-    final static Logger logger = LogManager.getLogger(CoinbaseUserService.class);
-    final CoinbaseConnexionService connexionService;
+    final ConnexionService connexionService;
     final UserRepository userRepository;
 
-    public UserCB getUser() throws CoinbaseApiException {
-
-        List<UserCB> users = userRepository.findAll();
-        if (users.size() > 0) {
+    public User getUser() throws CoinbaseApiException {
+        log.info("getUser");
+        List<User> users = userRepository.findAll();
+        if (!users.isEmpty()) {
             return users.get(0);
         }
 
@@ -51,7 +49,7 @@ public class CoinbaseUserService {
 //        JsonObject debugStringResponse = gson.fromJson(response.body(), JsonObject.class);
 //        logger.info(gson.toJson(debugStringResponse));
 
-        UserCB user = gson.fromJson(response.body(), UserResponseCB.class).getData();
+        User user = gson.fromJson(response.body(), UserResponse.class).getData();
 
         userRepository.save(user);
 

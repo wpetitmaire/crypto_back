@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  *     <li>canceled</li>
  * </ul>
  */
-public enum BuySellStatusCB {
+public enum BuySellStatus {
     @SerializedName("created")
     CREATED ,
     @SerializedName("completed")

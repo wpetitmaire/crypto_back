@@ -14,7 +14,7 @@ import com.google.gson.annotations.SerializedName;
  *     <li>waiting_for_clearing</li>
  * </ul>
  */
-public enum TransactionStatusCB {
+public enum TransactionStatus {
     @SerializedName("pending")
     PENDING,
 

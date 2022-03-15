@@ -10,9 +10,9 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
-import org.willy.crypto.connexion.coinbase.objects.errors.ErrorResponseFromCB;
-import org.willy.crypto.connexion.coinbase.objects.price.PriceCB;
-import org.willy.crypto.connexion.coinbase.objects.price.PriceResponseCB;
+import org.willy.crypto.connexion.coinbase.objects.errors.ErrorResponseFrom;
+import org.willy.crypto.connexion.coinbase.objects.price.Price;
+import org.willy.crypto.connexion.coinbase.objects.price.PriceResponse;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
@@ -24,20 +24,20 @@ import java.util.HashMap;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Service
-public class CoinbasePriceService {
-    final static Logger logger = LogManager.getLogger(CoinbasePriceService.class);
-    final CoinbaseUserService userService;
-    final CoinbaseConnexionService connexionService;
+public class PriceService {
+    final static Logger logger = LogManager.getLogger(PriceService.class);
+    final UserService userService;
+    final ConnexionService connexionService;
 
-    public PriceCB getPrice(String baseCurrency) throws CoinbaseApiException {
+    public Price getPrice(String baseCurrency) throws CoinbaseApiException {
         return getPrice(baseCurrency, DateTimeFormatter.ofPattern("uuuu-MM-dd").format(LocalDate.now()));
     }
 
-    public PriceCB getPrice(String baseCurrency, LocalDate date) throws CoinbaseApiException {
+    public Price getPrice(String baseCurrency, LocalDate date) throws CoinbaseApiException {
         return getPrice(baseCurrency, DateTimeFormatter.ofPattern("uuuu-MM-dd").format(date));
     }
 
-    public PriceCB getPrice(String baseCurrency, String date) throws CoinbaseApiException {
+    public Price getPrice(String baseCurrency, String date) throws CoinbaseApiException {
         logger.info("Get price of {}", baseCurrency);
         String userNativeCurrency = userService.getUser().getNative_currency();
         String ressourceUrl = "/v2/prices/" + baseCurrency + "-" + userNativeCurrency + "/spot";
@@ -52,9 +52,9 @@ public class CoinbasePriceService {
         Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
         if (response.statusCode() != HttpStatus.OK.value()) {
-            throw new CoinbaseApiException(gson.fromJson(response.body(), ErrorResponseFromCB.class).getErrors().get(0).getMessage(), HttpStatus.NOT_FOUND);
+            throw new CoinbaseApiException(gson.fromJson(response.body(), ErrorResponseFrom.class).getErrors().get(0).getMessage(), HttpStatus.NOT_FOUND);
         }
 
-        return gson.fromJson(response.body(), PriceResponseCB.class).getData();
+        return gson.fromJson(response.body(), PriceResponse.class).getData();
     }
 }

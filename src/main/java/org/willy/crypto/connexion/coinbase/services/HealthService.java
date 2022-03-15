@@ -4,12 +4,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
-import org.willy.crypto.connexion.coinbase.objects.health.AccountHealthCB;
+import org.willy.crypto.connexion.coinbase.objects.account.Account;
+import org.willy.crypto.connexion.coinbase.objects.health.AccountHealth;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -22,19 +20,19 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Service
 @Log4j2
-public class CoinbaseHealthService {
-    final AccountRepository accountRepository;
-    final CoinbasePriceService priceService;
+public class HealthService {
+    final AccountsService accountsService;
+    final PriceService priceService;
 
-    public List<AccountHealthCB> getAccountsHealth() throws CoinbaseApiException {
+    public List<AccountHealth> getAccountsHealth() throws CoinbaseApiException {
         log.info("Get accounts health");
 
-        List<AccountHealthCB> accountHealthList = new ArrayList<>();
-        List<AccountCB> accounts = accountRepository.findAllNoneFiatAccounts(Sort.by(Sort.Direction.ASC, "currency"));
+        List<AccountHealth> accountHealthList = new ArrayList<>();
+        List<Account> accounts = accountsService.getAllNoneFiatAccounts();
 
-        for (AccountCB account : accounts) {
+        for (Account account : accounts) {
 
-            AccountHealthCB health = new AccountHealthCB();
+            AccountHealth health = new AccountHealth();
 
             health.setAccountId(account.getCurrency().getCode());
 

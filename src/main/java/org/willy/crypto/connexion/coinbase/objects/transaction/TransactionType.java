@@ -18,7 +18,7 @@ import com.google.gson.annotations.SerializedName;
  *     <li>advanced_trade_fill</li>
  * </ul>
  */
-public enum TransactionTypeCB {
+public enum TransactionType {
     @SerializedName("send")
     SEND,
 

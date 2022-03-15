@@ -13,7 +13,7 @@ import javax.persistence.Embeddable;
 @AllArgsConstructor
 @ToString
 @Embeddable
-public class CurrencyCB {
+public class Currency {
 
     @Column(name = "currency_code")
     private String code;

@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.willy.crypto.connexion.coinbase.objects.HashCB;
 import org.willy.crypto.connexion.coinbase.objects.MoneyHashCB;
-import org.willy.crypto.connexion.coinbase.objects.buy.BuySellStatusCB;
+import org.willy.crypto.connexion.coinbase.objects.buy.BuySellStatus;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class SellCB {
+public class Sell {
 
     /**
      * Resource ID
@@ -28,7 +28,7 @@ public class SellCB {
     /**
      * Status of the sell. Currently available values: created, completed, canceled
      */
-    private BuySellStatusCB status;
+    private BuySellStatus status;
 
     /**
      * Associated payment method (e.g. a bank, fiat account)

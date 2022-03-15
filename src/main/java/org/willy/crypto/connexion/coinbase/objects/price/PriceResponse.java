@@ -1,15 +1,13 @@
-package org.willy.crypto.connexion.coinbase.objects.errors;
+package org.willy.crypto.connexion.coinbase.objects.price;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ErrorResponseFromCB {
-    List<ErrorFromCB> errors;
+public class PriceResponse {
+    Price data;
 }

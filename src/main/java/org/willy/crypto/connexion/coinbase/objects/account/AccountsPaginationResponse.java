@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class AccountsPaginationResponseCB {
+public class AccountsPaginationResponse {
 
     /**
      * Coinbase pagination basic structure
@@ -27,7 +27,7 @@ public class AccountsPaginationResponseCB {
 
     /**
      * List of accounts
-     * @see AccountCB
+     * @see Account
      */
-    private List<AccountCB> data;
+    private List<Account> data;
 }

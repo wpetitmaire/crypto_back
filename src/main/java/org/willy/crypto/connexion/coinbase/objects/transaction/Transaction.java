@@ -20,8 +20,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Entity
-@Table
-public class TransactionCB {
+@Table(name = "transactioncb")
+public class Transaction {
 
     /**
      * Resource ID
@@ -32,9 +32,9 @@ public class TransactionCB {
     /**
      * Transaction type
      */
-    private TransactionTypeCB type;
+    private TransactionType type;
 
-    private TransactionStatusCB status;
+    private TransactionStatus status;
 
     /**
      * Amount in bitcoin, bitcoin cash, litecoin or ethereum
@@ -78,13 +78,13 @@ public class TransactionCB {
      * Detailed information about the transaction
      */
     @Embedded
-    private DetailTransactionCB details;
+    private DetailTransaction details;
 
     /**
      * Information about bitcoin, bitcoin cash, litecoin or ethereum network including network transaction hash if transaction was on-blockchain. Only available for certain types of transactions
      */
     @Embedded
-    private NetworkTransactionCB network;
+    private NetworkTransaction network;
 
     /**
      * 	The receiving party of a debit transaction. Usually another resource but can also be another type like email. Only available for certain types of transactions

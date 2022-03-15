@@ -6,16 +6,15 @@ import com.google.gson.JsonObject;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.context.annotation.Scope;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountCB;
+import org.willy.crypto.connexion.coinbase.objects.account.Account;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountResponseCB;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountsPaginationResponseCB;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountResponse;
+import org.willy.crypto.connexion.coinbase.objects.account.AccountsPaginationResponse;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
@@ -28,13 +27,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Service
-@Scope("singleton")
-public class CoinbaseAccountsService {
+@Log4j2
+public class AccountsService {
 
-    final static Logger logger = LogManager.getLogger(CoinbaseAccountsService.class);
-
-    final CoinbaseConnexionService connexionService;
-    final CoinbaseTransactionsService transactionsService;
+    final ConnexionService connexionService;
+    final TransactionsService transactionsService;
 
     final AccountRepository accountRepository;
 
@@ -45,10 +42,10 @@ public class CoinbaseAccountsService {
      * @return user accounts
      * @param refresh force refresh
      */
-    public List<AccountCB> readAccounts(Boolean refresh) {
-        logger.info("Read accounts");
+    public List<Account> readAccounts(Boolean refresh) {
+        log.info("Read accounts");
 
-        List<AccountCB> accountList = new ArrayList<>();
+        List<Account> accountList = new ArrayList<>();
 
         LocalDateTime timeLimit = LocalDateTime.now().minus(1L, ChronoUnit.DAYS);
         if (accountsRetrieveDate != null && (accountsRetrieveDate.compareTo(timeLimit) > 0 || !refresh)) {
@@ -62,13 +59,13 @@ public class CoinbaseAccountsService {
         String ressourceUrl = "/v2/accounts";
         HttpResponse<String> getRequestResponse;
         String response;
-        AccountsPaginationResponseCB accountsResponse;
+        AccountsPaginationResponse accountsResponse;
         Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
         do {
             getRequestResponse = connexionService.getRequest(ressourceUrl);
             response = getRequestResponse.body();
-            accountsResponse = gson.fromJson(response, AccountsPaginationResponseCB.class);
+            accountsResponse = gson.fromJson(response, AccountsPaginationResponse.class);
             accountList.addAll(accountsResponse.getData());
 
             // If there is another page, change ressource url and do it again
@@ -94,12 +91,12 @@ public class CoinbaseAccountsService {
      * @param id id of the needed account
      * @return the account
      */
-    public AccountCB getAccount(String id) throws CoinbaseApiException {
+    public Account getAccount(String id) throws CoinbaseApiException {
 
-        AccountCB account = accountRepository.findById(id).orElse(null);
+        Account account = accountRepository.findById(id).orElse(null);
         JsonObject debugStringResponse = null;
 
-        logger.info(account);
+        log.info(account);
 
         // If no account found, calls the API to see if we need to add the ressource to the database
         if (account == null) {
@@ -107,16 +104,16 @@ public class CoinbaseAccountsService {
             HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
             Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
-            logger.info("après requête");
+            log.info("après requête");
 
             debugStringResponse = gson.fromJson(response.body(), JsonObject.class);
-            logger.info(gson.toJson(debugStringResponse));
+            log.info(gson.toJson(debugStringResponse));
 
             if (response.statusCode() != HttpStatus.OK.value()) {
                 throw new CoinbaseApiException("Account ressource not found", HttpStatus.BAD_REQUEST);
             }
 
-            account = gson.fromJson(response.body(), AccountResponseCB.class).getData();
+            account = gson.fromJson(response.body(), AccountResponse.class).getData();
 
             if (transactionsService.thereIsTransactionsForTheAccount(account.getCurrency().getCode())) {
                 accountRepository.save(account);
@@ -128,5 +125,31 @@ public class CoinbaseAccountsService {
         return account;
     }
 
+    /**
+     * Get all none fiat accounts with the default Sort method (on currency)
+     * @return non fiat accounts
+     */
+    public List<Account> getAllNoneFiatAccounts() {
+        return getAllNoneFiatAccounts(Sort.by(Sort.Direction.ASC, "currency"));
+    }
+
+    /**
+     * Get all accounts that are not fiat account (all crypto accounts)
+     * @param sort sort method to apply on result
+     * @return none fiat accounts
+     */
+    public List<Account> getAllNoneFiatAccounts(Sort sort) {
+        log.info("getAllNoneFiatAccounts");
+        // Get all none fiat accounts from DB
+        List<Account> accounts = accountRepository.findAllNoneFiatAccounts(sort);
+
+        // If nothing in DB, call API to fill the DB and try again
+        if (accounts.isEmpty()) {
+            readAccounts(true);
+            return getAllNoneFiatAccounts(sort);
+        }
+
+        return accounts;
+    }
 
 }

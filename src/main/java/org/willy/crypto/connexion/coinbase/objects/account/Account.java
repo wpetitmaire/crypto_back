@@ -4,7 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.willy.crypto.connexion.coinbase.listeners.AccountListener;
 import org.willy.crypto.connexion.coinbase.objects.MoneyHashCB;
-import org.willy.crypto.connexion.coinbase.objects.currency.CurrencyCB;
+import org.willy.crypto.connexion.coinbase.objects.currency.Currency;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * Description <a href="https://docs.cloud.coinbase.com/sign-in-with-coinbase/docs/api-accounts#show-an-account">Coinbase - account</a>
  * Composed of :
  * <ul>
- *     <li>A currency ressource {@link CurrencyCB}</li>
+ *     <li>A currency ressource {@link Currency}</li>
  *     <li>A currency ressource {@link MoneyHashCB}</li>
  * </ul>
  */
@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 @Entity
 @EntityListeners(AccountListener.class)
 @Table(name = "accountcb")
-public class AccountCB {
+public class Account {
 
 
     /**
@@ -57,7 +57,7 @@ public class AccountCB {
      */
     @Embedded
     @Column(name = "account_currency")
-    CurrencyCB currency;
+    Currency currency;
 
     /**
      * Balance in BTC or ETH

@@ -13,7 +13,7 @@ import javax.persistence.Embeddable;
 @AllArgsConstructor
 @ToString
 @Embeddable
-public class DetailTransactionCB {
+public class DetailTransaction {
 
     @Column(name = "detail_transaction_title")
     private String title;

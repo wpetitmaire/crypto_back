@@ -25,13 +25,13 @@ import java.util.Map;
 
 @Service
 @Scope("singleton")
-public class CoinbaseConnexionService {
+public class ConnexionService {
 
     public final static String SECRET_KEY = System.getProperty("cbSecretKey");
     public final static String API_KEY = System.getProperty("cbApiKey");
     public final static String BASE_URL = "https://api.coinbase.com";
     private final static HttpClient client = HttpClient.newHttpClient();
-    private final static Logger logger = LogManager.getLogger(CoinbaseConnexionService.class);
+    private final static Logger logger = LogManager.getLogger(ConnexionService.class);
 
     /* REQUESTS METHODS */
     public HttpResponse<String> getRequest(String resourceUrl) {
@@ -59,8 +59,8 @@ public class CoinbaseConnexionService {
         }
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(CoinbaseConnexionService.BASE_URL + resourceUrl))
-                .header("CB-ACCESS-KEY", CoinbaseConnexionService.API_KEY)
+                .uri(URI.create(ConnexionService.BASE_URL + resourceUrl))
+                .header("CB-ACCESS-KEY", ConnexionService.API_KEY)
                 .header("CB-ACCESS-SIGN", signature)
                 .header("CB-ACCESS-TIMESTAMP", String.valueOf(timestamp))
                 .header("CB-VERSION", "2021-06-03")
@@ -97,7 +97,7 @@ public class CoinbaseConnexionService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Algorithm HmacSHA256 not found in Mac.", e);
         }
 
-        SecretKeySpec secretKeySpec = new SecretKeySpec(CoinbaseConnexionService.SECRET_KEY.getBytes(), "HmacSHA256");
+        SecretKeySpec secretKeySpec = new SecretKeySpec(ConnexionService.SECRET_KEY.getBytes(), "HmacSHA256");
         try {
             hmacSHA256.init(secretKeySpec);
         } catch (InvalidKeyException e) {

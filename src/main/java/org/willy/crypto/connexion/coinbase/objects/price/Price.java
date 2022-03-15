@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PriceCB {
+public class Price {
     String base;
     String currency;
     BigDecimal amount;

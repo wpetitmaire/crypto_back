@@ -13,7 +13,7 @@ import javax.persistence.Embeddable;
 @NoArgsConstructor
 @ToString
 @Embeddable
-public class NetworkTransactionCB {
+public class NetworkTransaction {
 
     @Column(name = "network_transaction_status")
     private String status;

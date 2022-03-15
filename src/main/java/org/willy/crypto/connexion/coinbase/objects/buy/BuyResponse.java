@@ -1,23 +1,23 @@
-package org.willy.crypto.connexion.coinbase.objects.sell;
+package org.willy.crypto.connexion.coinbase.objects.buy;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.willy.crypto.connexion.coinbase.objects.PaginationCB;
-import org.willy.crypto.connexion.coinbase.objects.buy.BuyCB;
 
 import java.util.List;
 
 /**
- *<strong>Coinbase sell list pagination ressource</strong>
- * Description <a href="https://docs.cloud.coinbase.com/sign-in-with-coinbase/docs/api-sells">Coinbase - sell list</a>
+ *<strong>Coinbase buy list pagination ressource</strong>
+ * Description <a href="https://docs.cloud.coinbase.com/sign-in-with-coinbase/docs/api-buys">Coinbase - buy list</a>
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class SellResponseCB {
+public class BuyResponse {
+
     /**
      * Coinbase pagination basic structure
      * @see PaginationCB
@@ -25,8 +25,8 @@ public class SellResponseCB {
     private PaginationCB pagination;
 
     /**
-     * Coinbase sell list
-     * @see SellCB
+     * Coinbase buy list
+     * @see Buy
      */
-    private List<SellCB> data;
+    private List<Buy> data;
 }

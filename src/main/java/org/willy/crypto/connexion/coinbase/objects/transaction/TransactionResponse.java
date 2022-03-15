@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class TransactionResponseCB {
+public class TransactionResponse {
 
     /**
      * Coinbase pagination basic structure
@@ -26,7 +26,7 @@ public class TransactionResponseCB {
 
     /**
      * Coinbase transaction list
-     * @see TransactionCB
+     * @see Transaction
      */
-    private List<TransactionCB> data;
+    private List<Transaction> data;
 }

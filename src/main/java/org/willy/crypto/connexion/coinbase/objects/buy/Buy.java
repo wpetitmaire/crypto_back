@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class BuyCB {
+public class Buy {
     /**
      * Resource ID
      */
@@ -26,7 +26,7 @@ public class BuyCB {
     /**
      * Status of the buy. Currently available values: created, completed, canceled
      */
-    private BuySellStatusCB status;
+    private BuySellStatus status;
 
     /**
      * Associated payment method (e.g. a bank, fiat account)

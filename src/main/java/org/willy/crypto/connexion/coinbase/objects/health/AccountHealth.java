@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AccountHealthCB {
+public class AccountHealth {
     String accountId;
     BigDecimal unitPrice;
     BigDecimal unitPriceDeltaVariation;

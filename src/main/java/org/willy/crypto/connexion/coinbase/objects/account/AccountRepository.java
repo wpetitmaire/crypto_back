@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface AccountRepository extends JpaRepository<AccountCB, String> {
+public interface AccountRepository extends JpaRepository<Account, String> {
 
-    @Query("SELECT a from AccountCB a where a.type <> 'fiat'")
-    List<AccountCB> findAllNoneFiatAccounts(Sort sort);
+    @Query("SELECT a from Account a where a.type <> 'fiat'")
+    List<Account> findAllNoneFiatAccounts(Sort sort);
 }
