@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.Account;
 import org.willy.crypto.connexion.coinbase.objects.health.AccountHealth;
+import org.willy.crypto.connexion.coinbase.objects.health.PriceHistory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +54,20 @@ public class HealthService {
             BigDecimal amountPriceDeltaVariation = amountPrice.subtract(amountPriceDelta);
             health.setAmountPriceDeltaVariation(amountPriceDeltaVariation.setScale(2, RoundingMode.HALF_UP));
 
+            List<PriceHistory> prices = new ArrayList<>();
+            for (int i = 7; i > 1; i--) {
+                LocalDate localDate = LocalDate.now().minus(i, ChronoUnit.DAYS);
+                String date = DateTimeFormatter.ofPattern("dd-MM-uuuu").format(localDate);
+                BigDecimal historyPrice = priceService.getPrice(account.getCurrency().getCode(), localDate).getAmount();
+                prices.add(new PriceHistory(date, historyPrice));
+            }
+            health.setWeekHistory(prices);
+
             accountHealthList.add(health);
         }
 
         return accountHealthList;
     }
+
+
 }

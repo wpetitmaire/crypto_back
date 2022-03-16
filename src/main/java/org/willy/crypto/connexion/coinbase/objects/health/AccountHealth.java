@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -17,4 +18,5 @@ public class AccountHealth {
     BigDecimal amount;
     BigDecimal amountPrice;
     BigDecimal amountPriceDeltaVariation;
+    List<PriceHistory> weekHistory;
 }

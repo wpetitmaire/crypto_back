@@ -29,6 +29,8 @@ public class PriceService {
     final UserService userService;
     final ConnexionService connexionService;
 
+    String currentUserNativeCurrency = null;
+
     public Price getPrice(String baseCurrency) throws CoinbaseApiException {
         return getPrice(baseCurrency, DateTimeFormatter.ofPattern("uuuu-MM-dd").format(LocalDate.now()));
     }
@@ -38,8 +40,16 @@ public class PriceService {
     }
 
     public Price getPrice(String baseCurrency, String date) throws CoinbaseApiException {
-        logger.info("Get price of {}", baseCurrency);
-        String userNativeCurrency = userService.getUser().getNative_currency();
+        logger.info("Get price of {} at {}", baseCurrency, date);
+
+        String userNativeCurrency = null;
+        if (currentUserNativeCurrency == null) {
+            currentUserNativeCurrency = userService.getUser().getNative_currency();
+            userNativeCurrency = currentUserNativeCurrency;
+        } else {
+            userNativeCurrency = currentUserNativeCurrency;
+        }
+
         String ressourceUrl = "/v2/prices/" + baseCurrency + "-" + userNativeCurrency + "/spot";
 
         HttpResponse<String> response;
