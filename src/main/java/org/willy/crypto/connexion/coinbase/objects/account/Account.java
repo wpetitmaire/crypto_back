@@ -77,4 +77,9 @@ public class Account {
      * Date of the last retrieve
      */
     LocalDateTime account_retrieve_date;
+
+    /**
+     * Url to get the icon file of the account
+     */
+    String iconUrl;
 }

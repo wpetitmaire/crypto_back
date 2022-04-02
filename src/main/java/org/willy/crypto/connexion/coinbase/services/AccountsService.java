@@ -16,6 +16,7 @@ import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountResponse;
 import org.willy.crypto.connexion.coinbase.objects.account.AccountsPaginationResponse;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
+import org.willy.crypto.icons.IconsService;
 
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ public class AccountsService {
 
     final ConnexionService connexionService;
     final TransactionsService transactionsService;
+    final IconsService iconsService;
 
     final AccountRepository accountRepository;
 
@@ -66,6 +68,13 @@ public class AccountsService {
             getRequestResponse = connexionService.getRequest(ressourceUrl);
             response = getRequestResponse.body();
             accountsResponse = gson.fromJson(response, AccountsPaginationResponse.class);
+
+            // Add icon url for each account
+            accountsResponse.setData(accountsResponse.getData().stream().peek(account -> {
+                String iconUrl = iconsService.getIconUrl(account.getCurrency().getCode());
+                account.setIconUrl(iconUrl);
+            }).collect(Collectors.toList()));
+
             accountList.addAll(accountsResponse.getData());
 
             // If there is another page, change ressource url and do it again

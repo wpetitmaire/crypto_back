@@ -26,7 +26,7 @@ public class HealthService {
     final AccountsService accountsService;
     final PriceService priceService;
 
-    public List<AccountHealth> getAccountsHealth() throws CoinbaseApiException {
+    public List<AccountHealth> getAccountsHealth(Boolean withoutEmptyAccounts) throws CoinbaseApiException {
         log.info("Get accounts health");
 
         List<AccountHealth> accountHealthList = new ArrayList<>();
@@ -34,9 +34,15 @@ public class HealthService {
 
         for (Account account : accounts) {
 
+            if (withoutEmptyAccounts && account.getBalance().getAmount().compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+
             AccountHealth health = new AccountHealth();
 
             health.setAccountId(account.getCurrency().getCode());
+            health.setAccountName(account.getCurrency().getName());
+            health.setIconUrl(account.getIconUrl());
 
             BigDecimal price = priceService.getPrice(account.getCurrency().getCode()).getAmount();
             health.setUnitPrice(price);

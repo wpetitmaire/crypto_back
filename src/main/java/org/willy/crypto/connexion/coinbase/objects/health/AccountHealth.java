@@ -13,10 +13,12 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AccountHealth {
     String accountId;
+    String accountName;
     BigDecimal unitPrice;
     BigDecimal unitPriceDeltaVariation;
     BigDecimal amount;
     BigDecimal amountPrice;
     BigDecimal amountPriceDeltaVariation;
     List<PriceHistory> weekHistory;
+    String iconUrl;
 }
