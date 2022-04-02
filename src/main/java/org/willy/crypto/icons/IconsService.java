@@ -49,7 +49,7 @@ public class IconsService {
             return null;
 
         Icon neededIcon = icons.stream().filter(icon -> icon.getSymbol().equals(tokenId)).findFirst().orElse(null);
-        String url = neededIcon == null ? null : neededIcon.getImg_url();
+        String url = neededIcon == null ? "" : neededIcon.getImg_url();
 
         log.info("url : {}", url);
 
