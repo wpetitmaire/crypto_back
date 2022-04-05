@@ -47,8 +47,17 @@ public class HealthService {
             BigDecimal price = priceService.getPrice(account.getCurrency().getCode()).getAmount();
             health.setUnitPrice(price);
 
-            BigDecimal deltaPrice = priceService.getPrice(account.getCurrency().getCode(), LocalDate.now().minus(1L, ChronoUnit.DAYS)).getAmount();
-            health.setUnitPriceDeltaVariation(price.subtract(deltaPrice).setScale(2, RoundingMode.HALF_UP));
+            BigDecimal oldPrice = priceService.getPrice(account.getCurrency().getCode(), LocalDate.now().minus(1L, ChronoUnit.DAYS)).getAmount();
+            BigDecimal unitPriceVariation = price.subtract(oldPrice).setScale(2, RoundingMode.HALF_UP);
+            health.setUnitPriceVariation(unitPriceVariation);
+
+            BigDecimal unitPriceVariationPourcentage;
+            try{
+                unitPriceVariationPourcentage = price.divide(oldPrice, RoundingMode.HALF_UP).subtract(BigDecimal.ONE).multiply(new BigDecimal(100));
+            } catch (ArithmeticException e) {
+                unitPriceVariationPourcentage = BigDecimal.ZERO;
+            }
+            health.setUnitPriceVariationPourcentage(unitPriceVariationPourcentage);
 
             BigDecimal amount = account.getBalance().getAmount();
             health.setAmount(amount);
@@ -56,12 +65,20 @@ public class HealthService {
             BigDecimal amountPrice = price.multiply(amount);
             health.setAmountPrice(amountPrice);
 
-            BigDecimal amountPriceDelta = deltaPrice.multiply(amount);
-            BigDecimal amountPriceDeltaVariation = amountPrice.subtract(amountPriceDelta);
-            health.setAmountPriceDeltaVariation(amountPriceDeltaVariation.setScale(2, RoundingMode.HALF_UP));
+            BigDecimal oldAmountPrice = oldPrice.multiply(amount);
+            BigDecimal amountPriceVariation = amountPrice.subtract(oldAmountPrice);
+            health.setAmountPriceVariation(amountPriceVariation.setScale(2, RoundingMode.HALF_UP));
+
+            BigDecimal amountPriceVariationPourcentage;
+            try {
+                amountPriceVariationPourcentage = amountPrice.divide(oldAmountPrice, RoundingMode.HALF_UP).subtract(BigDecimal.ONE).multiply(new BigDecimal(100));
+            } catch (ArithmeticException e) {
+                amountPriceVariationPourcentage = BigDecimal.ZERO;
+            }
+            health.setAmountPriceVariationPourcentage(amountPriceVariationPourcentage);
 
             List<PriceHistory> prices = new ArrayList<>();
-            for (int i = 7; i > 1; i--) {
+            for (int i = 7; i > 0; i--) {
                 LocalDate localDate = LocalDate.now().minus(i, ChronoUnit.DAYS);
                 String date = DateTimeFormatter.ofPattern("dd-MM-uuuu").format(localDate);
                 BigDecimal historyPrice = priceService.getPrice(account.getCurrency().getCode(), localDate).getAmount();

@@ -15,10 +15,12 @@ public class AccountHealth {
     String accountId;
     String accountName;
     BigDecimal unitPrice;
-    BigDecimal unitPriceDeltaVariation;
+    BigDecimal unitPriceVariation;
+    BigDecimal unitPriceVariationPourcentage;
     BigDecimal amount;
     BigDecimal amountPrice;
-    BigDecimal amountPriceDeltaVariation;
+    BigDecimal amountPriceVariation;
+    BigDecimal amountPriceVariationPourcentage;
     List<PriceHistory> weekHistory;
     String iconUrl;
 }
