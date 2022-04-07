@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.Account;
 import org.willy.crypto.connexion.coinbase.objects.health.AccountHealth;
+import org.willy.crypto.connexion.coinbase.objects.health.HealthRepository;
 import org.willy.crypto.connexion.coinbase.objects.health.PriceHistory;
 
 import java.math.BigDecimal;
@@ -25,9 +26,31 @@ import java.util.List;
 public class HealthService {
     final AccountsService accountsService;
     final PriceService priceService;
+    final HealthRepository healthRepository;
 
     public List<AccountHealth> getAccountsHealth(Boolean withoutEmptyAccounts) throws CoinbaseApiException {
-        log.info("Get accounts health");
+        return getAccountsHealth(withoutEmptyAccounts, false);
+    }
+
+    public List<AccountHealth> getAccountsHealth(Boolean withoutEmptyAccounts, Boolean forceRefresh) throws CoinbaseApiException {
+        log.info("Get accounts health - withoutEmptyAccounts={} forceRefresh={}", withoutEmptyAccounts, forceRefresh);
+
+        forceRefresh = forceRefresh != null && forceRefresh;
+
+        if (!forceRefresh) {
+            // Get from DB
+            List<AccountHealth> saveList;
+            if (!withoutEmptyAccounts) {
+                saveList = healthRepository.findAll();
+            } else {
+                saveList = healthRepository.findAllNotEmptyAccounts();
+            }
+
+            if (!saveList.isEmpty()) {
+                return saveList;
+            }
+        }
+
 
         List<AccountHealth> accountHealthList = new ArrayList<>();
         List<Account> accounts = accountsService.getAllNoneFiatAccounts();
@@ -65,18 +88,6 @@ public class HealthService {
             BigDecimal amountPrice = price.multiply(amount);
             health.setAmountPrice(amountPrice);
 
-            BigDecimal oldAmountPrice = oldPrice.multiply(amount);
-            BigDecimal amountPriceVariation = amountPrice.subtract(oldAmountPrice);
-            health.setAmountPriceVariation(amountPriceVariation.setScale(2, RoundingMode.HALF_UP));
-
-            BigDecimal amountPriceVariationPourcentage;
-            try {
-                amountPriceVariationPourcentage = amountPrice.divide(oldAmountPrice, RoundingMode.HALF_UP).subtract(BigDecimal.ONE).multiply(new BigDecimal(100));
-            } catch (ArithmeticException e) {
-                amountPriceVariationPourcentage = BigDecimal.ZERO;
-            }
-            health.setAmountPriceVariationPourcentage(amountPriceVariationPourcentage);
-
             List<PriceHistory> prices = new ArrayList<>();
             for (int i = 7; i > 0; i--) {
                 LocalDate localDate = LocalDate.now().minus(i, ChronoUnit.DAYS);
@@ -88,6 +99,8 @@ public class HealthService {
 
             accountHealthList.add(health);
         }
+
+        healthRepository.saveAll(accountHealthList);
 
         return accountHealthList;
     }

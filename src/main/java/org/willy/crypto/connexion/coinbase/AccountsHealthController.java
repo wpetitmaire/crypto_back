@@ -42,7 +42,7 @@ public class AccountsHealthController {
             accountsService.readAccounts(true);
         }
 
-        List<AccountHealth> accountHealthCBList = healthService.getAccountsHealth(withoutEmptyAccounts);
+        List<AccountHealth> accountHealthCBList = healthService.getAccountsHealth(withoutEmptyAccounts, forceRefresh);
 
         if (accountHealthCBList.size() > 0) {
             return new ResponseEntity<>(accountHealthCBList, HttpStatus.OK);
