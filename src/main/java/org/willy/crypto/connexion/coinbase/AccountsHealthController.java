@@ -9,10 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.health.AccountHealth;
+import org.willy.crypto.connexion.coinbase.objects.health.WalletHealth;
+import org.willy.crypto.connexion.coinbase.objects.sell.Sell;
 import org.willy.crypto.connexion.coinbase.services.AccountsService;
 import org.willy.crypto.connexion.coinbase.services.HealthService;
+import org.willy.crypto.connexion.coinbase.services.TransactionsService;
 import org.willy.crypto.icons.IconsService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @AllArgsConstructor
@@ -25,6 +29,7 @@ public class AccountsHealthController {
 
     HealthService healthService;
     AccountsService accountsService;
+    TransactionsService transactionsService;
 //    IconsService iconsService;
 
     @GetMapping("/accounts")
@@ -51,10 +56,8 @@ public class AccountsHealthController {
         }
     }
 
-//    @GetMapping("/icon")
-//    public String iconTest() {
-//        log.info("---TEST");
-//        return iconsService.getIconUrl("SHIB");
-//    }
-
+    @GetMapping("/wallet")
+    public WalletHealth getWalletHealth(@RequestParam(required = false) Boolean forceRefresh) {
+        return healthService.getWalletHealth(forceRefresh);
+    };
 }
