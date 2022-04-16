@@ -45,7 +45,7 @@ public class AccountsService {
      * @param refresh force refresh
      */
     public List<Account> readAccounts(Boolean refresh) {
-        log.info("Read accounts");
+        log.info("Read accounts {}", refresh);
 
         List<Account> accountList = new ArrayList<>();
 

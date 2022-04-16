@@ -43,10 +43,6 @@ public class AccountsHealthController {
 
         log.info("accountsHealth : withoutEmptyAccounts = {} - forceRefresh = {}", withoutEmptyAccounts, forceRefresh);
 
-        if (forceRefresh) {
-            accountsService.readAccounts(true);
-        }
-
         List<AccountHealth> accountHealthCBList = healthService.getAccountsHealth(withoutEmptyAccounts, forceRefresh);
 
         if (accountHealthCBList.size() > 0) {
