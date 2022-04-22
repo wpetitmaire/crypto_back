@@ -32,8 +32,10 @@ public class Transaction {
     /**
      * Transaction type
      */
+    @Enumerated(EnumType.STRING)
     private TransactionType type;
 
+    @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
     /**
@@ -65,6 +67,7 @@ public class Transaction {
     private String updated_at;
     private String resource;
     private String resource_path;
+    private Boolean instant_exchange;
 
 //    @Embedded
 //    @AttributeOverrides({
@@ -73,6 +76,12 @@ public class Transaction {
 //            @AttributeOverride(name = "resource_path", @Column(name = "buy_transaction_ressource_path"))
 //    })
 //    private HashCB buy;
+
+    /**
+     * Trade details for trade transactions
+     */
+    @Embedded
+    private TradeTransaction trade;
 
     /**
      * Detailed information about the transaction
@@ -103,11 +112,12 @@ public class Transaction {
      */
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "id", column = @Column(name = "transaction_from_party_id")),
-            @AttributeOverride(name = "resource", column = @Column(name = "transaction_from_party_ressource")),
-            @AttributeOverride(name = "resource_path", column = @Column(name = "transaction_from_party_ressource_path"))
+            @AttributeOverride(name = "id", column = @Column(name = "transaction_from_id")),
+            @AttributeOverride(name = "resource", column = @Column(name = "transaction_from_ressource")),
+            @AttributeOverride(name = "resource_path", column = @Column(name = "transaction_from_ressource_path")),
+            @AttributeOverride(name = "currency", column = @Column(name = "transaction_from_currency"))
     })
-    private HashCB from;
+    private FromParty from;
 
     private LocalDateTime retrieve_date;
     private String associated_account_id;

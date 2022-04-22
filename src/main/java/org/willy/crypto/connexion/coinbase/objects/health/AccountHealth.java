@@ -2,7 +2,6 @@ package org.willy.crypto.connexion.coinbase.objects.health;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.willy.crypto.connexion.coinbase.listeners.AccountListener;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -14,7 +13,7 @@ import java.util.List;
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "accounthealthcb")
+@Table(name = "account_health_cb")
 public class AccountHealth {
 
     @Id
@@ -28,9 +27,11 @@ public class AccountHealth {
     BigDecimal amountPrice;
 
     @ElementCollection
-    @CollectionTable(name = "my_weekHistory", joinColumns = @JoinColumn(name = "accountId"))
+    @CollectionTable(name = "my_week_history", joinColumns = @JoinColumn(name = "accountId"))
     @Column(name = "weekHistory")
     List<PriceHistory> weekHistory;
 
     String iconUrl;
+    BigDecimal health;
+    BigDecimal earns;
 }

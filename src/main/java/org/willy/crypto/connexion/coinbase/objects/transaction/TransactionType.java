@@ -50,5 +50,14 @@ public enum TransactionType {
     VAULT_WITHDRAWAL,
 
     @SerializedName("advanced_trade_fill")
-    ADVANCED_TRADE_FILL;
+    ADVANCED_TRADE_FILL,
+
+    @SerializedName("trade")
+    TRADE,
+
+    @SerializedName("staking_reward")
+    STAKING_REWARD,
+
+    @SerializedName("inflation_reward")
+    INFLATION_REWARD;
 }

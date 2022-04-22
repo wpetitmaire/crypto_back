@@ -50,7 +50,7 @@ public class AccountsService {
         List<Account> accountList = new ArrayList<>();
 
         LocalDateTime timeLimit = LocalDateTime.now().minus(1L, ChronoUnit.DAYS);
-        if (accountsRetrieveDate != null && (accountsRetrieveDate.compareTo(timeLimit) > 0 || !refresh)) {
+        if (!refresh || accountsRetrieveDate != null && accountsRetrieveDate.compareTo(timeLimit) > 0) {
             return accountRepository.findAll();
         }
 

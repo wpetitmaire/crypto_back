@@ -5,8 +5,7 @@ import com.google.gson.GsonBuilder;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
@@ -27,9 +26,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Service
+@Log4j2
 public class TransactionsService {
 
-    final static Logger logger = LogManager.getLogger(TransactionsService.class);
     final ConnexionService connexionService;
     final TransactionRepository transactionRepository;
 
@@ -39,18 +38,17 @@ public class TransactionsService {
      * @return true if there is at least one transaction
      */
     public boolean thereIsTransactionsForTheAccount(String accountId){
-        logger.info("thereIsTransactionsForTheAccount : " + accountId);
-        return readTransactionsOfAAccount(accountId, true).size() > 0;
+        log.info("thereIsTransactionsForTheAccount : " + accountId);
+        return readTransactionsOfAAccount(accountId, false).size() > 0;
     }
 
     /**
      * Get the list of the transactions for an account
      * @param accountId Id of the account
-     * @param testIsATransaction true if we just need to know if it exists at least one transaction
      * @return List of transactions
      */
-    public List<Transaction> readTransactionsOfAAccount(String accountId, boolean testIsATransaction) {
-        logger.info("Read transactions from ressource : " + accountId + " - just test ? : " + testIsATransaction);
+    public List<Transaction> readTransactionsOfAAccount(String accountId, boolean debugMode) {
+        log.info("Read transactions from ressource : " + accountId + " - debug? : " + debugMode);
 
         List<Transaction> transactions = new ArrayList<>();
         boolean isNextPage;
@@ -58,13 +56,12 @@ public class TransactionsService {
         String reponse;
         TransactionResponse transactionResponse;
         String ressourceUrl;
-        Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime())
+                .setPrettyPrinting()
+                .create();
 
-        if (testIsATransaction) { // retrieve only one transaction is enough for testing.
-            ressourceUrl = "/v2/accounts/"+accountId+"/transactions?&limit=1";
-        } else {
-            ressourceUrl = "/v2/accounts/"+accountId+"/transactions";
-        }
+        ressourceUrl = "/v2/accounts/"+accountId+"/transactions";
 
         do {
             getRequestResponse = connexionService.getRequest(ressourceUrl);
@@ -73,12 +70,13 @@ public class TransactionsService {
             transactions.addAll(transactionResponse.getData());
 
             // If there is another page, change ressource url and do it again
-            if (!testIsATransaction) {
-                isNextPage = transactionResponse.getPagination().getNext_uri() != null;
-                ressourceUrl = transactionResponse.getPagination().getNext_uri();
+            isNextPage = transactionResponse.getPagination().getNext_uri() != null;
+            ressourceUrl = transactionResponse.getPagination().getNext_uri();
+
+
+            if (debugMode) {
+                log.info(gson.toJson(gson.fromJson(reponse, Object.class)));
             }
-            else
-                isNextPage = false;
         } while (isNextPage);
 
         transactions.forEach(transaction -> {
@@ -86,9 +84,11 @@ public class TransactionsService {
             transaction.setAssociated_account_id(accountId);
         });
 
+
+
         transactionRepository.saveAll(transactions);
 
-        logger.debug("Transaction number : {}", transactions.size());
+        log.debug("Transaction number : {}", transactions.size());
 
         return transactions;
     }
@@ -99,7 +99,7 @@ public class TransactionsService {
      * @return the transaction
      */
     public Transaction getTransaction(String accountId, String transactionId) throws CoinbaseApiException {
-        logger.info("get transaction of ressource {} with id {}", accountId, transactionId);
+        log.info("get transaction of ressource {} with id {}", accountId, transactionId);
 
         Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
 
@@ -122,7 +122,7 @@ public class TransactionsService {
     }
 
     public List<Buy> getBuys(String accountId) {
-        logger.info("get buys for account {}", accountId);
+        log.info("get buys for account {}", accountId);
 
 //        JsonObject debugStringResponse = null;
 
@@ -155,7 +155,7 @@ public class TransactionsService {
     }
 
     public List<Sell> getSells(String accountId) {
-        logger.info("get sell for account {}", accountId);
+        log.info("get sell for account {}", accountId);
 
         List<Sell> sells = new ArrayList<>();
         boolean isNextPage;
@@ -182,6 +182,12 @@ public class TransactionsService {
         return sells;
     }
 
+    public List<Transaction> getAllNoneFiatCurrencyTransactions() {
+        return transactionRepository.findAllNoneFiatCurrencyTransactions();
+    }
 
-
+    public List<Transaction> getPositivesTransactions(String accountId) {
+        log.info("accountId : {}", accountId);
+        return transactionRepository.findAllPositivesTransactions(accountId);
+    }
 }

@@ -20,4 +20,13 @@ public class DetailTransaction {
 
     @Column(name = "detail_transaction_subtitle")
     private String subtitle;
+
+    @Column(name = "detail_transaction_header")
+    private String header;
+
+    @Column(name = "detail_transaction_health")
+    private String health;
+
+    @Column(name = "detail_transaction_payment_method_name")
+    private String payment_method_name;
 }
