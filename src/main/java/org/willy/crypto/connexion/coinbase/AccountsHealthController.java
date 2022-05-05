@@ -10,13 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.health.AccountHealth;
 import org.willy.crypto.connexion.coinbase.objects.health.WalletHealth;
-import org.willy.crypto.connexion.coinbase.objects.sell.Sell;
-import org.willy.crypto.connexion.coinbase.services.AccountsService;
+import org.willy.crypto.connexion.coinbase.objects.health.output.AccountHealthOuput;
 import org.willy.crypto.connexion.coinbase.services.HealthService;
-import org.willy.crypto.connexion.coinbase.services.TransactionsService;
-import org.willy.crypto.icons.IconsService;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -28,12 +25,9 @@ import java.util.List;
 public class AccountsHealthController {
 
     HealthService healthService;
-    AccountsService accountsService;
-    TransactionsService transactionsService;
-//    IconsService iconsService;
 
     @GetMapping("/accounts")
-    public ResponseEntity<List<AccountHealth>> accountsHealth(
+    public ResponseEntity<AccountHealthOuput> accountsHealth(
             @RequestParam(required = false) Boolean withoutEmptyAccounts,
             @RequestParam(required = false) Boolean forceRefresh
     ) throws CoinbaseApiException {
@@ -44,16 +38,18 @@ public class AccountsHealthController {
         log.info("accountsHealth : withoutEmptyAccounts = {} - forceRefresh = {}", withoutEmptyAccounts, forceRefresh);
 
         List<AccountHealth> accountHealthCBList = healthService.getAccountsHealth(withoutEmptyAccounts, forceRefresh);
+        AccountHealthOuput ouput = new AccountHealthOuput(accountHealthCBList, LocalDateTime.now());
 
         if (accountHealthCBList.size() > 0) {
-            return new ResponseEntity<>(accountHealthCBList, HttpStatus.OK);
+            return new ResponseEntity<>(ouput, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
     }
 
     @GetMapping("/wallet")
-    public WalletHealth getWalletHealth(@RequestParam(required = false) Boolean forceRefresh) {
-        return healthService.getWalletHealth(forceRefresh);
+    public ResponseEntity<WalletHealth> getWalletHealth(@RequestParam(required = false) Boolean forceRefresh) {
+        WalletHealth walletHealth = healthService.getWalletHealth(forceRefresh);
+        return new ResponseEntity<>(walletHealth, HttpStatus.OK);
     };
 }

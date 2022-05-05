@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Entity
-@Table(name = "transactioncb")
+@Table(name = "transaction")
 public class Transaction {
 
     /**

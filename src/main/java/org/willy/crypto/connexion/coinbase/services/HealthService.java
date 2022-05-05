@@ -8,10 +8,14 @@ import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.Account;
 import org.willy.crypto.connexion.coinbase.objects.buy.Buy;
-import org.willy.crypto.connexion.coinbase.objects.health.*;
+import org.willy.crypto.connexion.coinbase.objects.health.AccountHealth;
+import org.willy.crypto.connexion.coinbase.objects.health.PriceHistory;
+import org.willy.crypto.connexion.coinbase.objects.health.WalletHealth;
 import org.willy.crypto.connexion.coinbase.objects.sell.Sell;
 import org.willy.crypto.connexion.coinbase.objects.transaction.Transaction;
-import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionRepository;
+import org.willy.crypto.connexion.coinbase.repositories.HealthRepository;
+import org.willy.crypto.connexion.coinbase.repositories.TransactionRepository;
+import org.willy.crypto.connexion.coinbase.repositories.WalletHealthRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -38,7 +42,6 @@ public class HealthService {
      * @param withoutEmptyAccounts to exclude used account but empty
      * @param forceRefresh Force refresh db datas by calling API
      * @return List of health of each account
-     * @throws CoinbaseApiException
      */
     public List<AccountHealth> getAccountsHealth(Boolean withoutEmptyAccounts, Boolean forceRefresh) throws CoinbaseApiException {
         log.info("Get accounts health - withoutEmptyAccounts={} forceRefresh={}", withoutEmptyAccounts, forceRefresh);
@@ -84,14 +87,14 @@ public class HealthService {
             health.setUnitPrice(price);
 
             // Get the price of yesterday
-            BigDecimal oldPrice = priceService.getPrice(account.getCurrency().getCode(), LocalDate.now().minus(1L, ChronoUnit.DAYS)).getAmount();
-            BigDecimal unitPriceVariation = price.subtract(oldPrice).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal yesterdayPrice = priceService.getPrice(account.getCurrency().getCode(), LocalDate.now().minus(1L, ChronoUnit.DAYS)).getAmount();
+            BigDecimal unitPriceVariation = price.subtract(yesterdayPrice).setScale(2, RoundingMode.HALF_UP);
             health.setUnitPriceVariation(unitPriceVariation);
 
             // Delta % variation calculation
             BigDecimal unitPriceVariationPourcentage;
             try{
-                unitPriceVariationPourcentage = price.divide(oldPrice, RoundingMode.HALF_UP).subtract(BigDecimal.ONE).multiply(new BigDecimal(100));
+                unitPriceVariationPourcentage = price.divide(yesterdayPrice, RoundingMode.HALF_UP).subtract(BigDecimal.ONE).multiply(new BigDecimal(100));
             } catch (ArithmeticException e) {
                 unitPriceVariationPourcentage = BigDecimal.ZERO;
             }
@@ -103,7 +106,9 @@ public class HealthService {
 
             // Amount price calculation
             BigDecimal amountPrice = price.multiply(amount);
+            BigDecimal amountYesterdayPrice = yesterdayPrice.multiply(amount);
             health.setAmountPrice(amountPrice);
+            health.setAmountYesterdayPrice(amountYesterdayPrice);
 
             // Calculation of the last week unit price evolution
             List<PriceHistory> prices = new ArrayList<>();
@@ -159,14 +164,10 @@ public class HealthService {
         return accountHealthList;
     }
 
-    /**
-     * Get the sum of all buys
-     * @return sum of all buys
-     */
     public BigDecimal getWalletBuys() {
         log.info("getWalletBuys");
 
-        BigDecimal buyAmount = new BigDecimal(0);
+        BigDecimal buyAmount = BigDecimal.ZERO;
         List<Account> accounts = accountsService.getAllNoneFiatAccounts();
 
         for (Account account : accounts) {
@@ -228,6 +229,19 @@ public class HealthService {
         return walletValue;
     }
 
+    public BigDecimal getYesterdayWalletValue() {
+        log.info("getYesterdayWalletValue");
+
+        BigDecimal walletValue = new BigDecimal(0);
+        List<AccountHealth> accountHealthList = healthRepository.findAll();
+
+        for (AccountHealth accountHealth: accountHealthList) {
+            walletValue = walletValue.add(accountHealth.getAmountYesterdayPrice());
+        }
+
+        return walletValue;
+    }
+
     public WalletHealth getWalletHealth(Boolean forceRefresh) {
         log.info("Wallet health");
 
@@ -242,11 +256,13 @@ public class HealthService {
             BigDecimal buys = getWalletBuys();
             BigDecimal sells = getWalletSells();
             BigDecimal value = getWalletValue();
-            BigDecimal balanceWithoutFees = value.subtract(buys);
+            BigDecimal yesterdayValue = getYesterdayWalletValue();
+            BigDecimal healthWithoutFees = value.subtract(buys);
             BigDecimal fees = getTotalFees();
-            BigDecimal balance = balanceWithoutFees.subtract(fees);
+            BigDecimal health = healthWithoutFees.subtract(fees);
+            BigDecimal balanceDayEvolution = value.subtract(yesterdayValue);
 
-            walletHealth = new WalletHealth(buys, sells, fees, balance, balanceWithoutFees);
+            walletHealth = new WalletHealth(buys, sells, fees, health, healthWithoutFees, value, yesterdayValue, balanceDayEvolution);
 
             walletHealthRepository.deleteAll();
             walletHealthRepository.save(walletHealth);
@@ -256,4 +272,6 @@ public class HealthService {
 
         return walletHealth;
     }
+
+
 }

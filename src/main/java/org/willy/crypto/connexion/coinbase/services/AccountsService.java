@@ -12,9 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.account.Account;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountRepository;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountResponse;
-import org.willy.crypto.connexion.coinbase.objects.account.AccountsPaginationResponse;
+import org.willy.crypto.connexion.coinbase.objects.account.input.AccountResponseFromCB;
+import org.willy.crypto.connexion.coinbase.objects.account.input.AccountsPaginationResponseFromCB;
+import org.willy.crypto.connexion.coinbase.repositories.AccountRepository;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 import org.willy.crypto.icons.IconsService;
 
@@ -61,19 +61,21 @@ public class AccountsService {
         String ressourceUrl = "/v2/accounts";
         HttpResponse<String> getRequestResponse;
         String response;
-        AccountsPaginationResponse accountsResponse;
-        Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
+        AccountsPaginationResponseFromCB accountsResponse;
+        Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
         do {
             getRequestResponse = connexionService.getRequest(ressourceUrl);
             response = getRequestResponse.body();
-            accountsResponse = gson.fromJson(response, AccountsPaginationResponse.class);
+            accountsResponse = gson.fromJson(response, AccountsPaginationResponseFromCB.class);
 
             // Add icon url for each account
             accountsResponse.setData(accountsResponse.getData().stream().peek(account -> {
                 String iconUrl = iconsService.getIconUrl(account.getCurrency().getCode());
                 account.setIconUrl(iconUrl);
             }).collect(Collectors.toList()));
+
+            log.info(gson.toJson(gson.fromJson(response, JsonObject.class)));
 
             accountList.addAll(accountsResponse.getData());
 
@@ -103,7 +105,7 @@ public class AccountsService {
     public Account getAccount(String id) throws CoinbaseApiException {
 
         Account account = accountRepository.findById(id).orElse(null);
-        JsonObject debugStringResponse = null;
+        JsonObject debugStringResponse;
 
         log.info(account);
 
@@ -113,16 +115,14 @@ public class AccountsService {
             HttpResponse<String> response = connexionService.getRequest(ressourceUrl);
             Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
-            log.info("après requête");
-
             debugStringResponse = gson.fromJson(response.body(), JsonObject.class);
-            log.info(gson.toJson(debugStringResponse));
+            log.debug(gson.toJson(debugStringResponse));
 
             if (response.statusCode() != HttpStatus.OK.value()) {
                 throw new CoinbaseApiException("Account ressource not found", HttpStatus.BAD_REQUEST);
             }
 
-            account = gson.fromJson(response.body(), AccountResponse.class).getData();
+            account = gson.fromJson(response.body(), AccountResponseFromCB.class).getData();
 
             if (transactionsService.thereIsTransactionsForTheAccount(account.getCurrency().getCode())) {
                 accountRepository.save(account);

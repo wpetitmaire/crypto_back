@@ -12,10 +12,10 @@ import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.buy.Buy;
 import org.willy.crypto.connexion.coinbase.objects.buy.BuyResponse;
 import org.willy.crypto.connexion.coinbase.objects.sell.Sell;
-import org.willy.crypto.connexion.coinbase.objects.sell.SellResponse;
+import org.willy.crypto.connexion.coinbase.objects.sell.input.SellResponseFromCB;
 import org.willy.crypto.connexion.coinbase.objects.transaction.Transaction;
-import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionRepository;
-import org.willy.crypto.connexion.coinbase.objects.transaction.TransactionResponse;
+import org.willy.crypto.connexion.coinbase.objects.transaction.input.TransactionResponseFromCB;
+import org.willy.crypto.connexion.coinbase.repositories.TransactionRepository;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
@@ -54,7 +54,7 @@ public class TransactionsService {
         boolean isNextPage;
         HttpResponse<String> getRequestResponse;
         String reponse;
-        TransactionResponse transactionResponse;
+        TransactionResponseFromCB transactionResponse;
         String ressourceUrl;
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime())
@@ -66,7 +66,7 @@ public class TransactionsService {
         do {
             getRequestResponse = connexionService.getRequest(ressourceUrl);
             reponse = getRequestResponse.body();
-            transactionResponse = gson.fromJson(reponse, TransactionResponse.class);
+            transactionResponse = gson.fromJson(reponse, TransactionResponseFromCB.class);
             transactions.addAll(transactionResponse.getData());
 
             // If there is another page, change ressource url and do it again
@@ -161,7 +161,7 @@ public class TransactionsService {
         boolean isNextPage;
         HttpResponse<String> response;
         String responseBody;
-        SellResponse sellResponse;
+        SellResponseFromCB sellResponse;
         String ressourceUrl;
         Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(LocalDateTime.class, new GsonLocalDateTime()).create();
 
@@ -171,7 +171,7 @@ public class TransactionsService {
             response = connexionService.getRequest(ressourceUrl);
             responseBody = response.body();
 
-            sellResponse = gson.fromJson(responseBody, SellResponse.class);
+            sellResponse = gson.fromJson(responseBody, SellResponseFromCB.class);
             sells.addAll(sellResponse.getData());
 
             // If there is another page, change ressource url and do it again

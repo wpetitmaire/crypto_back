@@ -13,7 +13,7 @@ import javax.persistence.Table;
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "usercb")
+@Table(name = "user_cb")
 public class User {
     @Id
     String id;

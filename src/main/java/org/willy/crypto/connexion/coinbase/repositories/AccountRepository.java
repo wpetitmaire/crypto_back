@@ -1,8 +1,9 @@
-package org.willy.crypto.connexion.coinbase.objects.account;
+package org.willy.crypto.connexion.coinbase.repositories;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.willy.crypto.connexion.coinbase.objects.account.Account;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package org.willy.crypto.connexion.coinbase.objects.buy;
+package org.willy.crypto.connexion.coinbase.objects.buy.input;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -10,7 +10,7 @@ import com.google.gson.annotations.SerializedName;
  *     <li>canceled</li>
  * </ul>
  */
-public enum BuySellStatus {
+public enum BuySellStatusFromCB {
     @SerializedName("created")
     CREATED ,
     @SerializedName("completed")

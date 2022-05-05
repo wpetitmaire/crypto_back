@@ -1,7 +1,8 @@
-package org.willy.crypto.connexion.coinbase.objects.transaction;
+package org.willy.crypto.connexion.coinbase.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.willy.crypto.connexion.coinbase.objects.transaction.Transaction;
 
 import java.util.List;
 

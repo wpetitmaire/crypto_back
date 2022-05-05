@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.willy.crypto.connexion.coinbase.exceptions.CoinbaseApiException;
 import org.willy.crypto.connexion.coinbase.objects.errors.ErrorResponseFrom;
 import org.willy.crypto.connexion.coinbase.objects.price.Price;
-import org.willy.crypto.connexion.coinbase.objects.price.PriceResponse;
+import org.willy.crypto.connexion.coinbase.objects.price.input.PriceResponseFromCB;
 import org.willy.crypto.helpers.gsonadapter.GsonLocalDateTime;
 
 import java.net.http.HttpResponse;
@@ -65,6 +65,6 @@ public class PriceService {
             throw new CoinbaseApiException(gson.fromJson(response.body(), ErrorResponseFrom.class).getErrors().get(0).getMessage(), HttpStatus.NOT_FOUND);
         }
 
-        return gson.fromJson(response.body(), PriceResponse.class).getData();
+        return gson.fromJson(response.body(), PriceResponseFromCB.class).getData();
     }
 }

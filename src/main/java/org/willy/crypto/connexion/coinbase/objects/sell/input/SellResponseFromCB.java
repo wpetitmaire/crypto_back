@@ -1,10 +1,11 @@
-package org.willy.crypto.connexion.coinbase.objects.sell;
+package org.willy.crypto.connexion.coinbase.objects.sell.input;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.willy.crypto.connexion.coinbase.objects.PaginationCB;
+import org.willy.crypto.connexion.coinbase.objects.sell.Sell;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class SellResponse {
+public class SellResponseFromCB {
     /**
      * Coinbase pagination basic structure
      * @see PaginationCB

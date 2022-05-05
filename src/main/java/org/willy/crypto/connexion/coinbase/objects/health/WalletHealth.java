@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -29,18 +30,35 @@ public class WalletHealth {
     /**
      * Total wallet amount value - buyTotal - fees
      */
-    BigDecimal walletBalance;
+    BigDecimal health;
 
     /**
      * Total wallet amount value - buyTotal
      */
-    BigDecimal walletBalanceWithoutFees;
+    BigDecimal healthWithoutFees;
 
-    public WalletHealth(BigDecimal buyTotal, BigDecimal sellTotal, BigDecimal feeTotal, BigDecimal walletBalance, BigDecimal walletBalanceWithoutFees) {
+    /**
+     * Current wallet balance
+     */
+    BigDecimal currentBalance;
+
+    /**
+     * Wallet balance of yesterday
+     */
+    BigDecimal yesterdayBalance;
+
+    BigDecimal balanceDayEvolution;
+
+    LocalDate atDate;
+
+    public WalletHealth(BigDecimal buyTotal, BigDecimal sellTotal, BigDecimal feeTotal, BigDecimal health, BigDecimal healthWithoutFees, BigDecimal currentBalance, BigDecimal yesterdayBalance, BigDecimal balanceDayEvolution) {
         this.buyTotal = buyTotal;
         this.sellTotal = sellTotal;
         this.feeTotal = feeTotal;
-        this.walletBalance = walletBalance;
-        this.walletBalanceWithoutFees = walletBalanceWithoutFees;
+        this.health = health;
+        this.healthWithoutFees = healthWithoutFees;
+        this.currentBalance = currentBalance;
+        this.yesterdayBalance = yesterdayBalance;
+        this.balanceDayEvolution = balanceDayEvolution;
     }
 }

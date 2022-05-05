@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @EntityListeners(AccountListener.class)
-@Table(name = "accountcb")
+@Table(name = "account")
 public class Account {
 
 

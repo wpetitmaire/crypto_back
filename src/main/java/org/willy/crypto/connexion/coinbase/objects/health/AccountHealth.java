@@ -13,7 +13,7 @@ import java.util.List;
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "account_health_cb")
+@Table(name = "account_health")
 public class AccountHealth {
 
     @Id
@@ -25,6 +25,7 @@ public class AccountHealth {
     BigDecimal unitPriceVariationPourcentage;
     BigDecimal amount;
     BigDecimal amountPrice;
+    BigDecimal amountYesterdayPrice;
 
     @ElementCollection
     @CollectionTable(name = "my_week_history", joinColumns = @JoinColumn(name = "accountId"))

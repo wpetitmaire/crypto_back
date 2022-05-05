@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.willy.crypto.connexion.coinbase.objects.HashCB;
 import org.willy.crypto.connexion.coinbase.objects.MoneyHashCB;
-import org.willy.crypto.connexion.coinbase.objects.buy.BuySellStatus;
+import org.willy.crypto.connexion.coinbase.objects.buy.input.BuySellStatusFromCB;
 
 import java.time.LocalDateTime;
 
@@ -28,7 +28,7 @@ public class Sell {
     /**
      * Status of the sell. Currently available values: created, completed, canceled
      */
-    private BuySellStatus status;
+    private BuySellStatusFromCB status;
 
     /**
      * Associated payment method (e.g. a bank, fiat account)
